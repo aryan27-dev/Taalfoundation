@@ -9,6 +9,7 @@ function App() {
     program: 'Beginner Foundation',
     message: ''
   })
+  const [navOpen, setNavOpen] = useState(false)
 
   const handleEnquirySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -86,15 +87,25 @@ Message: ${form.message}`
           backgroundImage: `linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.2)), url(${heroImage})`
         }}
       >
+        <button
+          className={`hamburger ${navOpen ? 'active' : ''}`}
+          aria-label="Toggle navigation"
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen((open) => !open)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <nav className="nav">
           <div className="brand">Taal Foundation</div>
-          <div className="nav-links">
-            <a href="#about">About</a>
-            <a href="#services">Services</a>
-            <a href="#events">Events</a>
-            <a href="#branches">Branches</a>
-            <a href="#reviews">Reviews</a>
-            <a href="#enquiry" className="cta">Enquire</a>
+          <div className={`nav-links collapsible ${navOpen ? 'open' : ''}`}>
+            <a href="#about" onClick={() => setNavOpen(false)}>About</a>
+            <a href="#services" onClick={() => setNavOpen(false)}>Services</a>
+            <a href="#events" onClick={() => setNavOpen(false)}>Events</a>
+            <a href="#branches" onClick={() => setNavOpen(false)}>Branches</a>
+            <a href="#reviews" onClick={() => setNavOpen(false)}>Reviews</a>
+            <a href="#enquiry" className="cta" onClick={() => setNavOpen(false)}>Enquire</a>
           </div>
         </nav>
 
