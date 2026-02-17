@@ -9,22 +9,10 @@ function App() {
     program: 'Beginner Foundation',
     message: ''
   })
-  const [navOpen, setNavOpen] = useState(false)
 
   const handleEnquirySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    const whatsappNumber = '919765651268'
-    const text = encodeURIComponent(
-      `New enquiry from Taal Foundation site:
-Name: ${form.name}
-Phone: ${form.phone}
-Program: ${form.program}
-Message: ${form.message}`
-    )
-
-    const url = `https://wa.me/${whatsappNumber}?text=${text}`
-    window.open(url, '_blank')
+    // Submission placeholder: hook up to backend or email here.
   }
   const events = [
     {
@@ -65,20 +53,6 @@ Message: ${form.message}`
 
   const reviewGalleryRef = useRef<HTMLDivElement | null>(null)
 
-  const scrollReviews = (direction: 'left' | 'right') => {
-    const gallery = reviewGalleryRef.current
-    if (!gallery) return
-
-    const firstCard = gallery.querySelector('.review-track article') as HTMLElement | null
-    const cardWidth = firstCard?.getBoundingClientRect().width ?? 320
-    const gap = 20
-
-    gallery.scrollBy({
-      left: direction === 'left' ? -(cardWidth + gap) : cardWidth + gap,
-      behavior: 'smooth'
-    })
-  }
-
   return (
     <div className="app">
       <header
@@ -87,25 +61,15 @@ Message: ${form.message}`
           backgroundImage: `linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.2)), url(${heroImage})`
         }}
       >
-        <button
-          className={`hamburger ${navOpen ? 'active' : ''}`}
-          aria-label="Toggle navigation"
-          aria-expanded={navOpen}
-          onClick={() => setNavOpen((open) => !open)}
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
         <nav className="nav">
           <div className="brand">Taal Foundation</div>
-          <div className={`nav-links collapsible ${navOpen ? 'open' : ''}`}>
-            <a href="#about" onClick={() => setNavOpen(false)}>About</a>
-            <a href="#services" onClick={() => setNavOpen(false)}>Services</a>
-            <a href="#events" onClick={() => setNavOpen(false)}>Events</a>
-            <a href="#branches" onClick={() => setNavOpen(false)}>Branches</a>
-            <a href="#reviews" onClick={() => setNavOpen(false)}>Reviews</a>
-            <a href="#enquiry" className="cta" onClick={() => setNavOpen(false)}>Enquire</a>
+          <div className="nav-links">
+            <a href="#about">About</a>
+            <a href="#services">Services</a>
+            <a href="#events">Events</a>
+            <a href="#branches">Branches</a>
+            <a href="#reviews">Reviews</a>
+            <a href="#enquiry" className="cta">Enquire</a>
           </div>
         </nav>
 
