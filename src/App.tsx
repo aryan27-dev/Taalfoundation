@@ -1,7 +1,30 @@
+import { useRef, useState } from 'react'
 import './App.css'
 import heroImage from './assets/homeimage.jpg'
 
 function App() {
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    program: 'Beginner Foundation',
+    message: ''
+  })
+
+  const handleEnquirySubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const whatsappNumber = '919765651268'
+    const text = encodeURIComponent(
+      `New enquiry from Taal Foundation site:
+Name: ${form.name}
+Phone: ${form.phone}
+Program: ${form.program}
+Message: ${form.message}`
+    )
+
+    const url = `https://wa.me/${whatsappNumber}?text=${text}`
+    window.open(url, '_blank')
+  }
   const events = [
     {
       year: '2022',
@@ -38,6 +61,22 @@ function App() {
       timing: 'Mon-Fri · 10:00 AM - 9:00 PM\nSat-Sun · 11:00 AM - 6:00 PM'
     }
   ]
+
+  const reviewGalleryRef = useRef<HTMLDivElement | null>(null)
+
+  const scrollReviews = (direction: 'left' | 'right') => {
+    const gallery = reviewGalleryRef.current
+    if (!gallery) return
+
+    const firstCard = gallery.querySelector('.review-track article') as HTMLElement | null
+    const cardWidth = firstCard?.getBoundingClientRect().width ?? 320
+    const gap = 20
+
+    gallery.scrollBy({
+      left: direction === 'left' ? -(cardWidth + gap) : cardWidth + gap,
+      behavior: 'smooth'
+    })
+  }
 
   return (
     <div className="app">
@@ -162,22 +201,39 @@ function App() {
           <p className="eyebrow">Enquiry</p>
           <h2>Start your dance journey with Taal Foundation.</h2>
         </div>
-        <form className="enquiry-form">
+        <form className="enquiry-form" onSubmit={handleEnquirySubmit}>
           <div className="field">
             <label htmlFor="name">Full Name</label>
-            <input id="name" type="text" placeholder="Enter your name" />
-          </div>
-          <div className="field">
-            <label htmlFor="email">Email Address</label>
-            <input id="email" type="email" placeholder="you@example.com" />
+            <input
+              id="name"
+              type="text"
+              placeholder="Enter your name"
+              value={form.name}
+              required
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
           </div>
           <div className="field">
             <label htmlFor="phone">Phone Number</label>
-            <input id="phone" type="tel" placeholder="+91 90000 00000" />
+            <input
+              id="phone"
+              type="tel"
+              placeholder="+91 90000 00000"
+              value={form.phone}
+              required
+              pattern="[0-9+\-\s]{10,15}"
+              inputMode="tel"
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
           </div>
           <div className="field">
             <label htmlFor="program">Program of Interest</label>
-            <select id="program">
+            <select
+              id="program"
+              value={form.program}
+              required
+              onChange={(e) => setForm({ ...form, program: e.target.value })}
+            >
               <option>Beginner Foundation</option>
               <option>Intermediate Training</option>
               <option>Advanced Performance</option>
@@ -186,7 +242,14 @@ function App() {
           </div>
           <div className="field full">
             <label htmlFor="message">Tell us about your goals</label>
-            <textarea id="message" rows={4} placeholder="Share your dance interests" />
+            <textarea
+              id="message"
+              rows={4}
+              placeholder="Share your dance interests"
+              value={form.message}
+              required
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+            />
           </div>
           <button type="submit" className="primary">Submit Enquiry</button>
         </form>
@@ -242,22 +305,8 @@ function App() {
           <p className="eyebrow">Reviews</p>
           <h2>What our dancers and parents say.</h2>
         </div>
-        <div className="reviews-grid">
-          <div className="google-embed">
-            <h3>Google Reviews</h3>
-            <p>
-              Embed your live Google Reviews here by replacing the iframe source with
-              your official Google Business Profile reviews link.
-            </p>
-            <div className="iframe-placeholder">
-              <iframe
-                title="Google Reviews"
-                src="https://maps.google.com"
-                loading="lazy"
-              />
-            </div>
-          </div>
-          <div className="review-cards">
+        <div className="review-gallery" ref={reviewGalleryRef}>
+          <div className="review-track">
             <article>
               <h4>“A nurturing academy with incredible mentors.”</h4>
               <p>— Ananya S.</p>
@@ -269,6 +318,14 @@ function App() {
             <article>
               <h4>“Professional training with a warm community.”</h4>
               <p>— Kavya M.</p>
+            </article>
+            <article>
+              <h4>“Thoughtful feedback every class; love the discipline.”</h4>
+              <p>— Meera T.</p>
+            </article>
+            <article>
+              <h4>“Great tabla accompaniment made my teen’s practice better.”</h4>
+              <p>— Arjun D.</p>
             </article>
           </div>
         </div>
