@@ -46,3 +46,7 @@ select,
 textarea {
   font-family: inherit;
 }
+
+html {
+  scroll-behavior: smooth;
+}

@@ -31,22 +31,11 @@ function App() {
 
   const branches = [
     {
-      name: 'Central Studio',
-      address: '12 Harmony Street, City Center',
-      phone: '+91 90000 00001',
-      timing: 'Mon-Sat · 7:00 AM - 9:00 PM'
-    },
-    {
-      name: 'North Wing',
-      address: '45 Rhythm Avenue, North District',
-      phone: '+91 90000 00002',
-      timing: 'Mon-Sat · 7:30 AM - 8:30 PM'
-    },
-    {
-      name: 'East Studio',
-      address: '88 Pulse Road, East Side',
-      phone: '+91 90000 00003',
-      timing: 'Tue-Sun · 8:00 AM - 8:00 PM'
+      name: 'Pimple Saudagar Branch',
+      address:
+        '4th Floor, Prime Square commercial complex, Kunal Icon Road, Pimple Saudagar, Pune.',
+      phone: '+91 97656 51268',
+      timing: 'Mon-Fri · 10:00 AM - 9:00 PM\nSat-Sun · 11:00 AM - 6:00 PM'
     }
   ]
 
@@ -101,8 +90,8 @@ function App() {
             <h2>Kathak programs at a glance</h2>
             <ul>
               <li>Kathak Foundations · Lucknow & Jaipur Gharana</li>
+              <li>Affiliated with Akhil Bhartiya Gandharva Vidyalay and Bharti Vidyapeeth</li>
               <li>Beginner to Professional Training</li>
-              <li>Footwork, Chakkars, Abhinaya, and Theory</li>
               <li>Performance & Competition Coaching</li>
             </ul>
             <div className="hero-highlight">
@@ -155,7 +144,7 @@ function App() {
               Classical Katthak training covering footwork, chakkars, abhinaya, and
               performance repertoire across gharanas.
             </p>
-            <span>Beginner · Intermediate · Advanced</span>
+            <span>Prarambhik - Visharad</span>
           </article>
           <article className="service-card">
             <h3>Tabla</h3>
@@ -163,7 +152,7 @@ function App() {
               Rhythm and taal training designed for dancers and musicians to deepen
               layakari, bols, and performance confidence.
             </p>
-            <span>Foundations · Accompaniment · Advanced</span>
+            <span>Prarambhik - Visharad</span>
           </article>
         </div>
       </section>
@@ -233,6 +222,16 @@ function App() {
               <p>{branch.address}</p>
               <p>{branch.phone}</p>
               <span>{branch.timing}</span>
+              <p className="map-label">Find us on Google Maps</p>
+              <div className="map-frame">
+                <iframe
+                  title="Taal Foundation Location"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3781.564959192824!2d73.7938534!3d18.593642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2b90be673cd95%3A0xe2214cb4ca6cfc35!2sTaal%20Foundation%20Dance%20and%20Music%20Academy!5e0!3m2!1sen!2sin!4v1771308423671!5m2!1sen!2sin"
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
             </article>
           ))}
         </div>
