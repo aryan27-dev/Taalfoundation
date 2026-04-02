@@ -12,7 +12,24 @@ function App() {
 
   const handleEnquirySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // Submission placeholder: hook up to backend or email here.
+
+    const phoneNumber = '919765651268'
+    const messageLines = [
+      'New Enquiry - Taal Foundation',
+      `Name: ${form.name}`,
+      `Phone: ${form.phone}`,
+      `Program: ${form.program}`,
+      `Message: ${form.message}`
+    ]
+
+    const message = encodeURIComponent(messageLines.join('\n'))
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
+
+    const popup = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+
+    if (!popup) {
+      alert('Popup blocked. Please allow popups and try again, or open WhatsApp and message +91 97656 51268.')
+    }
   }
   const events = [
     {
