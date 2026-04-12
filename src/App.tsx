@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import './App.css'
-import heroImage from './assets/homeimage.jpg'
+import heroImage from './assets/homepage1.jpg'
 
 function App() {
   const [form, setForm] = useState({

@@ -215,7 +215,7 @@
 .events {
   background:
     linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.55)),
-    url('./assets/background1.jpg') center/cover no-repeat;
+    url('./assets/background1.jpg') center 10%/cover no-repeat;
   color: #f8fafc;
 }
 
@@ -226,7 +226,7 @@
 .reviews {
   background:
     linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.55)),
-    url('./assets/background2.jpg') center/cover no-repeat;
+    url('./assets/background3.jpg') center/cover no-repeat;
   color: #f8fafc;
 }
 
