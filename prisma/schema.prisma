@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  mustResetPass Boolean   @default(true)
+  role          Role      @default(STUDENT)
+  profilePhoto  String?
+  phone         String?
+  parentName    String?
+  parentPhone   String?
+  address       String?
+  dateOfBirth   DateTime?
+  joinDate      DateTime  @default(now())
+  isActive      Boolean   @default(true)
+  batchId       String?
+  batch         Batch?    @relation(fields: [batchId], references: [id])
+  fees          Fee[]
+  attendances   Attendance[]
+  uniformOrders UniformOrder[]
+  eventRegs     EventRegistration[]
+  notifications Notification[]
+  feeStructure  StudentFeeStructure?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+model Batch {
+  id          String      @id @default(cuid())
+  name        String
+  schedule    String
+  instructor  String
+  capacity    Int         @default(20)
+  isActive    Boolean     @default(true)
+  students    User[]
+  attendances Attendance[]
+  createdAt   DateTime    @default(now())
+}
+
+model StudentFeeStructure {
+  id            String   @id @default(cuid())
+  studentId     String   @unique
+  student       User     @relation(fields: [studentId], references: [id])
+  baseAmount    Float
+  currentAmount Float
+  incrementYear Int      @default(0)
+  effectiveFrom DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Fee {
+  id                String    @id @default(cuid())
+  studentId         String
+  student           User      @relation(fields: [studentId], references: [id])
+  amount            Float
+  dueDate           DateTime
+  paidDate          DateTime?
+  status            FeeStatus @default(PENDING)
+  feeType           FeeType   @default(MONTHLY)
+  month             String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  receipt           String?
+  waivedReason      String?
+  notes             String?
+  eventId           String?
+  event             Event?    @relation(fields: [eventId], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+enum FeeStatus {
+  PENDING
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+enum FeeType {
+  MONTHLY
+  ANNUAL_EVENT
+  REGISTRATION
+  UNIFORM
+  OTHER
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  description   String?
+  eventDate     DateTime
+  feeAmount     Float               @default(0)
+  isOptional    Boolean             @default(false)
+  fees          Fee[]
+  registrations EventRegistration[]
+  createdAt     DateTime            @default(now())
+}
+
+model EventRegistration {
+  id           String   @id @default(cuid())
+  studentId    String
+  student      User     @relation(fields: [studentId], references: [id])
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id])
+  hasPaid      Boolean  @default(false)
+  registeredAt DateTime @default(now())
+
+  @@unique([studentId, eventId])
+}
+
+model UniformItem {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  sizes       String[]
+  category    String
+  imageUrl    String?
+  isAvailable Boolean            @default(true)
+  stock       Int                @default(0)
+  orders      UniformOrderItem[]
+}
+
+model UniformOrder {
+  id          String             @id @default(cuid())
+  studentId   String
+  student     User               @relation(fields: [studentId], references: [id])
+  totalAmount Float
+  status      OrderStatus        @default(PENDING)
+  items       UniformOrderItem[]
+  orderedAt   DateTime           @default(now())
+  deliveredAt DateTime?
+  notes       String?
+}
+
+model UniformOrderItem {
+  id       String       @id @default(cuid())
+  orderId  String
+  order    UniformOrder @relation(fields: [orderId], references: [id])
+  itemId   String
+  item     UniformItem  @relation(fields: [itemId], references: [id])
+  size     String
+  quantity Int          @default(1)
+  price    Float
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  studentId String
+  student   User             @relation(fields: [studentId], references: [id])
+  batchId   String
+  batch     Batch            @relation(fields: [batchId], references: [id])
+  date      DateTime
+  status    AttendanceStatus @default(PRESENT)
+  notes     String?
+
+  @@unique([studentId, date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  isPublished Boolean  @default(true)
+  targetBatch String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+  title   String
+  message String
+  type    String
+  isRead  Boolean  @default(false)
+  sentAt  DateTime @default(now())
+}
+
+model ClassSchedule {
+  id          String   @id @default(cuid())
+  batchId     String?
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  isRecurring Boolean  @default(false)
+  recurrence  String?
+  updatedAt   DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
