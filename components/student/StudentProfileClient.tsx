@@ -11,11 +11,7 @@ interface User {
   feeStructure?: { currentAmount: number; baseAmount: number; incrementYear: number } | null
 }
 
-const input = {
-  width: '100%', padding: '0.625rem 0.875rem', borderRadius: '8px',
-  border: '1.5px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc',
-  outline: 'none', boxSizing: 'border-box' as const,
-}
+const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all box-border text-slate-900"
 
 export default function StudentProfileClient({ user }: { user: User }) {
   const [editing, setEditing] = useState(false)
@@ -45,120 +41,165 @@ export default function StudentProfileClient({ user }: { user: User }) {
   }
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: '0 0 1.25rem' }}>My Profile</h1>
+    <div className="font-inter space-y-6">
+      <h1 className="text-2xl font-bold text-slate-900 m-0">My Profile</h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Profile card */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-full">
           {/* Avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-            <div style={{
-              width: '64px', height: '64px', borderRadius: '50%',
-              background: 'linear-gradient(135deg,#f97316,#fbbf24)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.75rem', color: '#fff', fontWeight: 700, flexShrink: 0,
-            }}>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-2xl font-bold shrink-0">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>{user.name}</p>
-              <p style={{ margin: '2px 0', fontSize: '0.85rem', color: '#64748b' }}>{user.email}</p>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Joined {formatDate(user.joinDate)}</p>
+              <p className="m-0 text-lg font-bold text-slate-900">{user.name}</p>
+              <p className="m-0 mt-1 text-sm text-slate-500 font-medium">{user.email}</p>
+              <p className="m-0 mt-0.5 text-xs text-slate-400">Joined {formatDate(user.joinDate)}</p>
             </div>
           </div>
 
           {/* Batch info */}
           {user.batch && (
-            <div style={{ padding: '0.875rem', background: '#f8fafc', borderRadius: '10px', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
-              <p style={{ margin: '0 0 2px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Batch</p>
-              <p style={{ margin: 0, fontWeight: 600, color: '#0f172a' }}>{user.batch.name}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{user.batch.schedule} · {user.batch.instructor}</p>
+            <div className="p-4 bg-slate-50 rounded-xl mb-4 border border-slate-100">
+              <p className="m-0 mb-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Batch</p>
+              <p className="m-0 font-bold text-slate-900">{user.batch.name}</p>
+              <p className="m-0 mt-1 text-sm text-slate-600">{user.batch.schedule} <span className="mx-1">•</span> {user.batch.instructor}</p>
             </div>
           )}
 
           {/* Fee info */}
           {user.feeStructure && (
-            <div style={{ padding: '0.875rem', background: 'rgba(249,115,22,0.06)', borderRadius: '10px', border: '1px solid rgba(249,115,22,0.2)' }}>
-              <p style={{ margin: '0 0 2px', fontSize: '0.75rem', fontWeight: 600, color: '#f97316', textTransform: 'uppercase' }}>Monthly Fee</p>
-              <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#f97316' }}>{formatCurrency(user.feeStructure.currentAmount)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Base: {formatCurrency(user.feeStructure.baseAmount)} · {user.feeStructure.incrementYear} revision(s)</p>
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="m-0 mb-1 text-xs font-bold text-blue-600 uppercase tracking-wider">Monthly Fee</p>
+              <p className="m-0 text-xl font-bold text-blue-700">{formatCurrency(user.feeStructure.currentAmount)}</p>
+              <p className="m-0 mt-1 text-xs text-blue-500 font-medium">Base: {formatCurrency(user.feeStructure.baseAmount)} <span className="mx-1">•</span> {user.feeStructure.incrementYear} revision(s)</p>
             </div>
           )}
         </div>
 
-        {/* Edit form */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Contact Details</h2>
-            {!editing && <button onClick={() => setEditing(true)} style={{ padding: '0.4rem 0.875rem', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#374151', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Edit</button>}
-          </div>
-
-          {editing ? (
-            <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {[
-                { label: 'Phone', key: 'phone', type: 'tel', placeholder: '+91 90000 00000' },
-                { label: 'Address', key: 'address', type: 'text', placeholder: 'Your address' },
-                { label: 'Parent Name', key: 'parentName', type: 'text', placeholder: 'Parent / Guardian name' },
-                { label: 'Parent Phone', key: 'parentPhone', type: 'tel', placeholder: '+91 90000 00000' },
-              ].map(({ label, key, type, placeholder }) => (
-                <div key={key}>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: '#374151' }}>{label}</label>
-                  <input type={type} value={form[key as keyof typeof form]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder} style={input} />
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                <button type="button" onClick={() => setEditing(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#374151', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(45deg,#f97316,#fbbf24)', color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>
-                  {loading ? 'Saving…' : 'Save'}
+        <div className="space-y-5">
+          {/* Edit form */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="m-0 text-lg font-bold text-slate-900">Contact Details</h2>
+              {!editing && (
+                <button 
+                  onClick={() => setEditing(true)} 
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+                >
+                  Edit
                 </button>
-              </div>
-            </form>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {[
-                { label: 'Phone', value: user.phone },
-                { label: 'Address', value: user.address },
-                { label: 'Parent Name', value: user.parentName },
-                { label: 'Parent Phone', value: user.parentPhone },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{label}</p>
-                  <p style={{ margin: '2px 0 0', color: value ? '#0f172a' : '#94a3b8' }}>{value || 'Not set'}</p>
-                </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Change password */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Security</h2>
-            {!changingPassword && <button onClick={() => setChangingPassword(true)} style={{ padding: '0.4rem 0.875rem', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#374151', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Change Password</button>}
+            {editing ? (
+              <form onSubmit={saveProfile} className="flex flex-col gap-4">
+                {[
+                  { label: 'Phone', key: 'phone', type: 'tel', placeholder: '+91 90000 00000' },
+                  { label: 'Address', key: 'address', type: 'text', placeholder: 'Your address' },
+                  { label: 'Parent Name', key: 'parentName', type: 'text', placeholder: 'Parent / Guardian name' },
+                  { label: 'Parent Phone', key: 'parentPhone', type: 'tel', placeholder: '+91 90000 00000' },
+                ].map(({ label, key, type, placeholder }) => (
+                  <div key={key}>
+                    <label className="block font-semibold text-sm mb-1.5 text-slate-700">{label}</label>
+                    <input 
+                      type={type} 
+                      value={form[key as keyof typeof form]} 
+                      onChange={(e) => setForm({ ...form, [key]: e.target.value })} 
+                      placeholder={placeholder} 
+                      className={inputClass} 
+                    />
+                  </div>
+                ))}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setEditing(false)} 
+                    className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors border-none cursor-pointer shadow-sm"
+                  >
+                    {loading ? 'Saving…' : 'Save Details'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: 'Phone', value: user.phone },
+                  { label: 'Address', value: user.address },
+                  { label: 'Parent Name', value: user.parentName },
+                  { label: 'Parent Phone', value: user.parentPhone },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="m-0 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+                    <p className={`m-0 font-medium ${value ? 'text-slate-900' : 'text-slate-400'}`}>{value || 'Not set'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {changingPassword ? (
-            <form onSubmit={changePassword} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {[
-                { label: 'New Password', key: 'newPassword', placeholder: 'Minimum 8 characters' },
-                { label: 'Confirm Password', key: 'confirm', placeholder: 'Repeat your password' },
-              ].map(({ label, key, placeholder }) => (
-                <div key={key}>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: '#374151' }}>{label}</label>
-                  <input type="password" value={pwForm[key as keyof typeof pwForm]} onChange={(e) => setPwForm({ ...pwForm, [key]: e.target.value })} placeholder={placeholder} style={input} />
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setChangingPassword(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#374151', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(45deg,#f97316,#fbbf24)', color: '#0f172a', fontWeight: 700, cursor: 'pointer' }}>
-                  {loading ? 'Saving…' : 'Update Password'}
+          {/* Change password */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="m-0 text-lg font-bold text-slate-900">Security</h2>
+              {!changingPassword && (
+                <button 
+                  onClick={() => setChangingPassword(true)} 
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+                >
+                  Update
                 </button>
-              </div>
-            </form>
-          ) : (
-            <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Your password was last updated when you first logged in. Keep it secure and do not share it with anyone.</p>
-          )}
+              )}
+            </div>
+
+            {changingPassword ? (
+              <form onSubmit={changePassword} className="flex flex-col gap-4">
+                {[
+                  { label: 'New Password', key: 'newPassword', placeholder: 'Minimum 8 characters' },
+                  { label: 'Confirm Password', key: 'confirm', placeholder: 'Repeat your password' },
+                ].map(({ label, key, placeholder }) => (
+                  <div key={key}>
+                    <label className="block font-semibold text-sm mb-1.5 text-slate-700">{label}</label>
+                    <input 
+                      type="password" 
+                      value={pwForm[key as keyof typeof pwForm]} 
+                      onChange={(e) => setPwForm({ ...pwForm, [key]: e.target.value })} 
+                      placeholder={placeholder} 
+                      className={inputClass} 
+                    />
+                  </div>
+                ))}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setChangingPassword(false)} 
+                    className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors border-none cursor-pointer shadow-sm"
+                  >
+                    {loading ? 'Saving…' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p className="m-0 text-slate-500 text-sm leading-relaxed">
+                Your password was last updated when you first logged in. Keep it secure and do not share it with anyone.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

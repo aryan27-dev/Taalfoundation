@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import { CheckCircle2, Save, Download } from 'lucide-react'
 
 interface Batch { id: string; name: string }
 interface Student { id: string; name: string; batchId?: string }
@@ -11,12 +12,14 @@ interface AttendanceRecord { studentId: string; status: string; notes?: string }
 const STATUS_OPTIONS = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const
 type Status = typeof STATUS_OPTIONS[number]
 
-const statusStyle: Record<Status, { bg: string; color: string }> = {
-  PRESENT: { bg: 'rgba(34,197,94,0.15)', color: '#16a34a' },
-  ABSENT: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444' },
-  LATE: { bg: 'rgba(249,115,22,0.15)', color: '#f97316' },
-  EXCUSED: { bg: 'rgba(59,130,246,0.15)', color: '#3b82f6' },
+const statusStyle: Record<Status, string> = {
+  PRESENT: 'bg-green-100 text-green-700',
+  ABSENT: 'bg-rose-100 text-rose-700',
+  LATE: 'bg-orange-100 text-orange-700',
+  EXCUSED: 'bg-blue-100 text-blue-700',
 }
+
+const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all box-border text-slate-900"
 
 export default function AttendanceClient({ batches }: { batches: Batch[] }) {
   const [batchId, setBatchId] = useState(batches[0]?.id || '')
@@ -72,96 +75,96 @@ export default function AttendanceClient({ batches }: { batches: Batch[] }) {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Attendance</h1>
-        <p style={{ color: '#64748b', margin: '4px 0 0' }}>Mark daily attendance per batch</p>
+    <div className="font-inter space-y-6 max-w-4xl mx-auto p-4 md:p-8">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 m-0">Attendance</h1>
+        <p className="text-slate-500 mt-2 m-0 text-base">Mark daily attendance per batch</p>
       </div>
 
       {/* Controls */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
-        <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: '#374151' }}>Batch</label>
-          <select value={batchId} onChange={(e) => setBatchId(e.target.value)} style={{ padding: '0.625rem 0.875rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc', outline: 'none' }}>
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4 flex-wrap items-end">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block font-semibold text-sm mb-1.5 text-slate-700">Batch</label>
+          <select value={batchId} onChange={(e) => setBatchId(e.target.value)} className={inputClass}>
             {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
-        <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: '#374151' }}>Date</label>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ padding: '0.625rem 0.875rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc', outline: 'none' }} />
+        <div className="flex-1 min-w-[200px]">
+          <label className="block font-semibold text-sm mb-1.5 text-slate-700">Date</label>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
         </div>
-        <button onClick={loadAttendance} style={{ padding: '0.625rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f172a', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
-          Load
+        <button 
+          onClick={loadAttendance} 
+          className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer flex items-center gap-2 h-[42px]"
+        >
+          <Download size={16} /> Load Data
         </button>
       </div>
 
       {loaded && (
-        <>
+        <div className="space-y-6">
           {/* Bulk actions */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.85rem', color: '#64748b', alignSelf: 'center', marginRight: '0.25rem' }}>Mark all as:</span>
-            {STATUS_OPTIONS.map((s) => {
-              const { bg, color } = statusStyle[s]
-              return (
-                <button key={s} onClick={() => markAll(s)} style={{
-                  padding: '0.35rem 0.875rem', borderRadius: '999px', border: 'none',
-                  fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', background: bg, color,
-                }}>{s}</button>
-              )
-            })}
+          <div className="flex gap-2 mb-4 flex-wrap items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span className="text-sm font-semibold text-slate-600 mr-2">Mark all as:</span>
+            {STATUS_OPTIONS.map((s) => (
+              <button 
+                key={s} 
+                onClick={() => markAll(s)} 
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-transform hover:scale-105 cursor-pointer border-none ${statusStyle[s]}`}
+              >
+                {s}
+              </button>
+            ))}
           </div>
 
           {/* Student list */}
-          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', marginBottom: '1rem' }}>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             {students.length === 0 ? (
-              <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No students in this batch</div>
+              <div className="p-12 text-center text-slate-500 font-medium">No students in this batch</div>
             ) : (
-              students.map((student, i) => {
-                const status = attendance[student.id] || 'PRESENT'
-                const { bg, color } = statusStyle[status]
-                return (
-                  <div key={student.id} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0.875rem 1.25rem', borderBottom: i < students.length - 1 ? '1px solid #f1f5f9' : 'none',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#f97316,#fbbf24)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                        fontWeight: 700, fontSize: '0.875rem', flexShrink: 0,
-                      }}>
-                        {student.name.charAt(0).toUpperCase()}
+              <div className="divide-y divide-slate-100">
+                {students.map((student) => {
+                  const status = attendance[student.id] || 'PRESENT'
+                  const statusClass = statusStyle[status]
+                  return (
+                    <div key={student.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                          {student.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-bold text-slate-900">{student.name}</span>
                       </div>
-                      <span style={{ fontWeight: 500, color: '#0f172a' }}>{student.name}</span>
+                      <button 
+                        onClick={() => toggle(student.id)} 
+                        className={`px-4 py-2 rounded-full text-xs font-bold min-w-[100px] cursor-pointer transition-colors border-none ${statusClass}`}
+                      >
+                        {status}
+                      </button>
                     </div>
-                    <button onClick={() => toggle(student.id)} style={{
-                      padding: '0.35rem 1rem', borderRadius: '999px', border: 'none',
-                      fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
-                      background: bg, color, minWidth: '90px',
-                    }}>
-                      {status}
-                    </button>
-                  </div>
-                )
-              })
+                  )
+                })}
+              </div>
             )}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={save} disabled={saving} style={{
-              padding: '0.75rem 2rem', borderRadius: '10px', border: 'none',
-              background: 'linear-gradient(45deg,#f97316,#fbbf24)', color: '#0f172a',
-              fontWeight: 700, fontSize: '1rem', cursor: saving ? 'not-allowed' : 'pointer',
-            }}>
-              {saving ? 'Saving…' : '✓ Save Attendance'}
+          <div className="flex justify-end pt-2">
+            <button 
+              onClick={save} 
+              disabled={saving} 
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors border-none shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            >
+              <Save size={18} /> {saving ? 'Saving…' : 'Save Attendance'}
             </button>
           </div>
-        </>
+        </div>
       )}
 
       {!loaded && (
-        <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          Select a batch and date, then click <strong>Load</strong> to start marking attendance.
+        <div className="p-16 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+            <CheckCircle2 size={32} />
+          </div>
+          <p className="m-0 font-medium">Select a batch and date, then click <strong>Load Data</strong> to start marking attendance.</p>
         </div>
       )}
     </div>

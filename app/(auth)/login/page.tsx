@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -121,7 +122,7 @@ export default function LoginPage() {
         </p>
 
         <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
-          <a href="/" style={{ color: '#64748b', fontSize: '0.85rem' }}>← Back to website</a>
+          <Link href="/" style={{ color: '#64748b', fontSize: '0.85rem' }}>← Back to website</Link>
         </div>
       </div>
     </div>

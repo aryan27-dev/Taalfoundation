@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Plus, X, PackageOpen, Shirt, ArrowRight, Tag, Boxes, AlertCircle } from 'lucide-react'
 
 interface UniformItem {
   id: string; name: string; description?: string; price: number; sizes: string[]
@@ -18,20 +19,16 @@ interface Order {
 }
 
 const STATUS_ORDER = ['PENDING', 'CONFIRMED', 'READY', 'DELIVERED', 'CANCELLED']
-const statusColors: Record<string, { bg: string; color: string }> = {
-  PENDING: { bg: 'rgba(249,115,22,0.1)', color: '#f97316' },
-  CONFIRMED: { bg: 'rgba(59,130,246,0.1)', color: '#3b82f6' },
-  READY: { bg: 'rgba(168,85,247,0.1)', color: '#a855f7' },
-  DELIVERED: { bg: 'rgba(34,197,94,0.1)', color: '#16a34a' },
-  CANCELLED: { bg: 'rgba(100,116,139,0.1)', color: '#64748b' },
+
+const statusColors: Record<string, string> = {
+  PENDING: 'bg-orange-100 text-orange-700 border-orange-200',
+  CONFIRMED: 'bg-blue-100 text-blue-700 border-blue-200',
+  READY: 'bg-purple-100 text-purple-700 border-purple-200',
+  DELIVERED: 'bg-green-100 text-green-700 border-green-200',
+  CANCELLED: 'bg-slate-100 text-slate-700 border-slate-200',
 }
 
-const btn = (v: 'primary' | 'ghost' | 'danger' = 'primary') => ({
-  padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 600,
-  fontSize: '0.85rem', cursor: 'pointer',
-  background: v === 'primary' ? 'linear-gradient(45deg,#f97316,#fbbf24)' : v === 'danger' ? 'rgba(239,68,68,0.1)' : '#f1f5f9',
-  color: v === 'primary' ? '#0f172a' : v === 'danger' ? '#ef4444' : '#374151',
-})
+const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all box-border text-slate-900"
 
 export default function UniformsAdminClient({ items: initialItems, orders: initialOrders }: { items: UniformItem[]; orders: Order[] }) {
   const [tab, setTab] = useState<'orders' | 'catalog'>('orders')
@@ -72,114 +69,212 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1100px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <div className="font-inter space-y-6 max-w-5xl mx-auto p-4 md:p-8">
+      <div className="flex justify-between items-center mb-2 flex-wrap gap-4">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Uniforms & Accessories</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0' }}>Manage catalog and student orders</p>
+          <h1 className="text-3xl font-bold text-slate-900 m-0">Uniforms & Accessories</h1>
+          <p className="text-slate-500 mt-2 m-0 text-base">Manage catalog and student orders</p>
         </div>
-        {tab === 'catalog' && <button style={btn('primary')} onClick={() => setShowAddItem(true)}>+ Add Item</button>}
+        {tab === 'catalog' && (
+          <button 
+            onClick={() => setShowAddItem(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm border-none"
+          >
+            <Plus size={18} /> Add Item
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        {[{ key: 'orders', label: `Orders (${orders.length})` }, { key: 'catalog', label: `Catalog (${items.length})` }].map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key as 'orders' | 'catalog')} style={{
-            padding: '0.5rem 1.25rem', borderRadius: '999px', border: 'none', fontSize: '0.9rem',
-            fontWeight: tab === key ? 700 : 500, cursor: 'pointer',
-            background: tab === key ? '#0f172a' : '#f1f5f9', color: tab === key ? '#fff' : '#374151',
-          }}>{label}</button>
+      <div className="flex gap-2 p-1.5 bg-slate-100 rounded-xl w-fit mb-6">
+        {[
+          { key: 'orders', label: `Orders (${orders.length})` }, 
+          { key: 'catalog', label: `Catalog (${items.length})` }
+        ].map(({ key, label }) => (
+          <button 
+            key={key} 
+            onClick={() => setTab(key as 'orders' | 'catalog')} 
+            className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer border-none ${
+              tab === key 
+                ? 'bg-white text-slate-900 shadow-sm' 
+                : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+            }`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
       {tab === 'orders' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="flex flex-col gap-4">
           {orders.map((order) => {
-            const { bg, color } = statusColors[order.status] || { bg: '#f1f5f9', color: '#374151' }
+            const statusClass = statusColors[order.status] || 'bg-slate-100 text-slate-700 border-slate-200'
             const nextStatus = STATUS_ORDER[STATUS_ORDER.indexOf(order.status) + 1]
             return (
-              <div key={order.id} style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div key={order.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex justify-between items-start mb-5 flex-wrap gap-4">
                   <div>
-                    <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>{order.student.name}</p>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>{order.student.email} · {formatDate(order.orderedAt)}</p>
+                    <h3 className="m-0 text-lg font-bold text-slate-900 mb-1">{order.student.name}</h3>
+                    <p className="m-0 text-sm font-medium text-slate-500">{order.student.email} <span className="mx-1.5 text-slate-300">•</span> {formatDate(order.orderedAt)}</p>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, padding: '4px 10px', borderRadius: '999px', background: bg, color }}>{order.status}</span>
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${statusClass}`}>
+                      {order.status}
+                    </span>
                     {nextStatus && nextStatus !== 'CANCELLED' && (
-                      <button style={{ ...btn('ghost'), padding: '0.35rem 0.75rem', fontSize: '0.8rem' }} onClick={() => updateOrderStatus(order.id, nextStatus)}>
-                        → {nextStatus}
+                      <button 
+                        onClick={() => updateOrderStatus(order.id, nextStatus)}
+                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer border-none shadow-sm"
+                      >
+                        {nextStatus} <ArrowRight size={14} />
                       </button>
                     )}
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '0.875rem' }}>
-                  {order.items.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', padding: '0.25rem 0', color: '#475569' }}>
-                      <span>{item.item.name} — Size {item.size} × {item.quantity}</span>
-                      <span style={{ fontWeight: 600 }}>{formatCurrency(item.price * item.quantity)}</span>
-                    </div>
-                  ))}
-                  <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                    <strong>Total: {formatCurrency(order.totalAmount)}</strong>
+                
+                <div className="border-t border-slate-100 pt-4 mt-2">
+                  <div className="space-y-3 mb-4">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="flex justify-between items-center text-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                            <Shirt size={14} />
+                          </div>
+                          <span className="font-medium text-slate-700">
+                            {item.item.name} <span className="text-slate-400 mx-1">|</span> Size {item.size} <span className="text-slate-400 mx-1">×</span> {item.quantity}
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-900">{formatCurrency(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Amount</span>
+                    <span className="text-lg font-bold text-blue-600">{formatCurrency(order.totalAmount)}</span>
                   </div>
                 </div>
               </div>
             )
           })}
-          {orders.length === 0 && <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>No orders yet</div>}
+          
+          {orders.length === 0 && (
+            <div className="p-16 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                <PackageOpen size={32} />
+              </div>
+              <p className="m-0 font-medium">No orders yet.</p>
+            </div>
+          )}
         </div>
       )}
 
       {tab === 'catalog' && (
         <>
           {showAddItem && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-              <div style={{ background: '#fff', borderRadius: '20px', padding: '2rem', width: '100%', maxWidth: '480px' }}>
-                <h2 style={{ margin: '0 0 1.5rem', fontSize: '1.25rem', fontWeight: 700 }}>Add Catalog Item</h2>
-                <form onSubmit={addItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200 my-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="m-0 text-xl font-bold text-slate-900">Add Catalog Item</h2>
+                  <button onClick={() => setShowAddItem(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <form onSubmit={addItem} className="flex flex-col gap-4">
                   {[
-                    { label: 'Item Name *', key: 'name', placeholder: 'Practice Costume' },
-                    { label: 'Price (₹) *', key: 'price', placeholder: '1200' },
-                    { label: 'Stock Count', key: 'stock', placeholder: '50' },
-                    { label: 'Available Sizes (comma-separated)', key: 'sizes', placeholder: 'XS,S,M,L,XL,XXL' },
+                    { label: 'Item Name *', key: 'name', placeholder: 'e.g. Practice Costume' },
+                    { label: 'Price (₹) *', key: 'price', placeholder: 'e.g. 1200' },
+                    { label: 'Stock Count', key: 'stock', placeholder: 'e.g. 50' },
+                    { label: 'Available Sizes (comma-separated)', key: 'sizes', placeholder: 'e.g. XS,S,M,L,XL,XXL' },
                   ].map(({ label, key, placeholder }) => (
                     <div key={key}>
-                      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>{label}</label>
-                      <input value={itemForm[key as keyof typeof itemForm]} onChange={(e) => setItemForm({ ...itemForm, [key]: e.target.value })}
-                        required={label.includes('*')} placeholder={placeholder}
-                        style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                      <label className="block font-semibold text-sm mb-1.5 text-slate-700">{label}</label>
+                      <input 
+                        value={itemForm[key as keyof typeof itemForm]} 
+                        onChange={(e) => setItemForm({ ...itemForm, [key]: e.target.value })}
+                        required={label.includes('*')} 
+                        placeholder={placeholder}
+                        className={inputClass} 
+                      />
                     </div>
                   ))}
                   <div>
-                    <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>Category</label>
-                    <select value={itemForm.category} onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
-                      style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', boxSizing: 'border-box' }}>
+                    <label className="block font-semibold text-sm mb-1.5 text-slate-700">Category</label>
+                    <select 
+                      value={itemForm.category} 
+                      onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
+                      className={inputClass}
+                    >
                       <option value="UNIFORM">Uniform</option>
                       <option value="ACCESSORY">Accessory</option>
                     </select>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                    <button type="button" style={btn('ghost')} onClick={() => setShowAddItem(false)}>Cancel</button>
-                    <button type="submit" style={btn('primary')} disabled={loading}>{loading ? 'Adding…' : 'Add Item'}</button>
+                  
+                  <div className="flex gap-3 justify-end mt-4">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAddItem(false)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={loading}
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? 'Adding…' : 'Add Item'}
+                    </button>
                   </div>
                 </form>
               </div>
             </div>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {items.map((item) => (
-              <div key={item.id} style={{ background: '#fff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>{item.category}</span>
-                  <span style={{ fontSize: '0.75rem', color: item.stock > 0 ? '#16a34a' : '#ef4444', fontWeight: 600 }}>{item.stock > 0 ? `${item.stock} in stock` : 'Out of stock'}</span>
+              <div key={item.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4 gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                    <Tag size={12} /> {item.category}
+                  </span>
+                  
+                  {item.stock > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
+                      <Boxes size={12} /> {item.stock} in stock
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
+                      <AlertCircle size={12} /> Out of stock
+                    </span>
+                  )}
                 </div>
-                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{item.name}</h3>
-                <p style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 700, color: '#f97316' }}>{formatCurrency(item.price)}</p>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Sizes: {item.sizes.join(', ')}</p>
+                
+                <h3 className="m-0 text-lg font-bold text-slate-900 mb-2">{item.name}</h3>
+                <p className="m-0 text-2xl font-bold text-slate-900 mb-6">{formatCurrency(item.price)}</p>
+                
+                <div className="mt-auto pt-4 border-t border-slate-100">
+                  <p className="m-0 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Available Sizes</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.sizes.map(size => (
+                      <span key={size} className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-700">
+                        {size}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+          
+          {items.length === 0 && (
+            <div className="p-16 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center col-span-full">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                <Shirt size={32} />
+              </div>
+              <p className="m-0 font-medium">Catalog is empty. Click <strong>Add Item</strong> to expand it.</p>
+            </div>
+          )}
         </>
       )}
     </div>

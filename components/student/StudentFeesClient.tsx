@@ -3,17 +3,18 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Download, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 
 interface Fee {
   id: string; amount: number; dueDate: string; paidDate?: string; status: string
   feeType: string; month?: string; razorpayPaymentId?: string; event?: { title: string } | null
 }
 
-const statusStyle: Record<string, { bg: string; color: string }> = {
-  PAID: { bg: 'rgba(34,197,94,0.1)', color: '#16a34a' },
-  PENDING: { bg: 'rgba(249,115,22,0.1)', color: '#f97316' },
-  OVERDUE: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
-  WAIVED: { bg: 'rgba(148,163,184,0.15)', color: '#64748b' },
+const statusStyle: Record<string, { bg: string; text: string; icon: any }> = {
+  PAID: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2 },
+  PENDING: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Clock },
+  OVERDUE: { bg: 'bg-rose-100', text: 'text-rose-700', icon: AlertCircle },
+  WAIVED: { bg: 'bg-slate-100', text: 'text-slate-600', icon: CheckCircle2 },
 }
 
 declare global {
@@ -52,7 +53,7 @@ export default function StudentFeesClient({ fees: initial }: { fees: Fee[] }) {
           order_id: orderId,
           name: 'Taal Foundation',
           description: `Fee Payment — ${fee.month || fee.feeType}`,
-          theme: { color: '#f97316' },
+          theme: { color: '#3b82f6' },
           handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
             const verify = await fetch('/api/fees/verify-payment', {
               method: 'POST',
@@ -83,73 +84,72 @@ export default function StudentFeesClient({ fees: initial }: { fees: Fee[] }) {
   }
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: '0 0 1.25rem' }}>My Fees</h1>
+    <div className="font-inter">
+      <h1 className="text-2xl font-bold text-slate-900 m-0 mb-6">My Fees</h1>
 
       {/* Summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Total Pending', value: formatCurrency(totalPending), color: '#f97316', bg: 'rgba(249,115,22,0.08)' },
-          { label: 'Total Paid', value: formatCurrency(totalPaid), color: '#16a34a', bg: 'rgba(34,197,94,0.08)' },
-        ].map((s) => (
-          <div key={s.label} style={{ background: s.bg, borderRadius: '14px', padding: '1.25rem', border: `1px solid ${s.color}30` }}>
-            <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{s.label}</p>
-            <p style={{ margin: '4px 0 0', fontSize: '1.5rem', fontWeight: 700, color: s.color }}>{s.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">Total Pending</p>
+          <p className="text-3xl font-bold text-rose-600 m-0 mt-2">{formatCurrency(totalPending)}</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">Total Paid</p>
+          <p className="text-3xl font-bold text-[#10b981] m-0 mt-2">{formatCurrency(totalPaid)}</p>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2 mb-6">
         {(['ALL', 'PENDING', 'PAID', 'OVERDUE'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: '0.4rem 1rem', borderRadius: '999px', border: 'none', fontSize: '0.85rem',
-            fontWeight: tab === t ? 700 : 500, cursor: 'pointer',
-            background: tab === t ? '#0f172a' : '#f1f5f9', color: tab === t ? '#fff' : '#374151',
-          }}>{t}</button>
+          <button 
+            key={t} 
+            onClick={() => setTab(t)} 
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors decoration-none border-none cursor-pointer ${
+              tab === t ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {t}
+          </button>
         ))}
       </div>
 
       {/* Fee list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+      <div className="space-y-4">
         {filtered.map((fee) => {
-          const { bg, color } = statusStyle[fee.status] || { bg: '#f1f5f9', color: '#374151' }
+          const { bg, text, icon: Icon } = statusStyle[fee.status] || { bg: 'bg-slate-100', text: 'text-slate-600', icon: Clock }
           const canPay = fee.status === 'PENDING' || fee.status === 'OVERDUE'
           return (
-            <div key={fee.id} style={{
-              background: '#fff', borderRadius: '14px', padding: '1.25rem',
-              border: `1px solid ${canPay ? '#fbbf24' : '#e2e8f0'}`,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
-            }}>
+            <div key={fee.id} className={`bg-white border ${canPay ? 'border-rose-200' : 'border-slate-200'} rounded-2xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4`}>
               <div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.25rem' }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem', color: '#0f172a' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <p className="font-bold text-slate-900 text-lg m-0">
                     {formatCurrency(fee.amount)}
                   </p>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: bg, color }}>
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${bg} ${text}`}>
+                    <Icon size={14} />
                     {fee.status}
                   </span>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                <p className="text-sm text-slate-500 m-0 font-medium">
                   {fee.event ? fee.event.title : fee.month || fee.feeType.replace('_', ' ')}
-                  {' · '}
-                  {fee.status === 'PAID' ? `Paid ${formatDate(fee.paidDate!)}` : `Due ${formatDate(fee.dueDate)}`}
+                  <span className="mx-2">•</span>
+                  {fee.status === 'PAID' ? `Paid on ${formatDate(fee.paidDate!)}` : `Due on ${formatDate(fee.dueDate)}`}
                 </p>
                 {fee.razorpayPaymentId && (
-                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>ID: {fee.razorpayPaymentId}</p>
+                  <p className="text-xs text-slate-400 m-0 mt-1">Transaction ID: {fee.razorpayPaymentId}</p>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+              <div className="flex items-center gap-3">
                 {canPay && (
                   <button
                     onClick={() => pay(fee)}
                     disabled={payingId === fee.id}
-                    style={{
-                      padding: '0.625rem 1.5rem', borderRadius: '10px', border: 'none',
-                      background: 'linear-gradient(45deg,#f97316,#fbbf24)',
-                      color: '#0f172a', fontWeight: 700, fontSize: '0.9rem',
-                      cursor: payingId === fee.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
-                    }}
+                    className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors decoration-none border-none ${
+                      payingId === fee.id 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm'
+                    }`}
                   >
                     {payingId === fee.id ? 'Processing…' : 'Pay Now'}
                   </button>
@@ -159,15 +159,9 @@ export default function StudentFeesClient({ fees: initial }: { fees: Fee[] }) {
                     href={`/api/student/fees/${fee.id}/receipt`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      padding: '0.625rem 1.25rem', borderRadius: '10px',
-                      border: '1.5px solid #e2e8f0', background: '#fff',
-                      color: '#374151', fontWeight: 600, fontSize: '0.875rem',
-                      textDecoration: 'none', whiteSpace: 'nowrap',
-                      display: 'flex', alignItems: 'center', gap: '0.4rem',
-                    }}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm decoration-none flex items-center gap-2 transition-colors shadow-sm"
                   >
-                    ↓ Receipt
+                    <Download size={16} /> Receipt
                   </a>
                 )}
               </div>
@@ -175,8 +169,11 @@ export default function StudentFeesClient({ fees: initial }: { fees: Fee[] }) {
           )
         })}
         {filtered.length === 0 && (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8', background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-            No fees found in this category.
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 size={32} />
+            </div>
+            <p className="text-slate-500 font-medium m-0">No fees found in this category.</p>
           </div>
         )}
       </div>

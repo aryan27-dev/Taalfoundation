@@ -4,83 +4,84 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { useState } from 'react'
+import { Search, Bell, User } from 'lucide-react'
 
 const navItems = [
-  { href: '/student/dashboard', label: 'Home', icon: '🏠' },
-  { href: '/student/fees', label: 'Fees', icon: '💰' },
-  { href: '/student/attendance', label: 'Attendance', icon: '✅' },
-  { href: '/student/schedule', label: 'Schedule', icon: '🗓️' },
-  { href: '/student/events', label: 'Events', icon: '🎭' },
-  { href: '/student/uniforms', label: 'Uniforms', icon: '👗' },
-  { href: '/student/announcements', label: 'Notices', icon: '📢' },
-  { href: '/student/profile', label: 'Profile', icon: '👤' },
+  { href: '/student/dashboard', label: 'Home' },
+  { href: '/student/fees', label: 'Fees' },
+  { href: '/student/attendance', label: 'Attendance' },
+  { href: '/student/schedule', label: 'Schedule' },
+  { href: '/student/events', label: 'Events' },
+  { href: '/student/profile', label: 'Profile' },
 ]
 
 export default function StudentNav({ userName }: { userName: string }) {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
 
   return (
-    <nav style={{
-      background: '#0f172a', color: '#f8fafc', position: 'sticky', top: 0, zIndex: 40,
-      boxShadow: '0 2px 16px rgba(15,23,42,0.2)',
-    }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '60px' }}>
+    <nav className="bg-[#111827] text-slate-200 sticky top-0 z-40 border-b border-slate-800 font-inter">
+      <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-[72px]">
         {/* Logo */}
-        <Link href="/student/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.25rem' }}>🎭</span>
-          <span style={{ fontWeight: 700, color: '#fbbf24', fontSize: '1rem' }}>Taal Foundation</span>
+        <Link href="/student/dashboard" className="flex items-center gap-2 text-decoration-none mr-8">
+          <span className="text-[#10b981] font-bold text-lg">Taal Foundation</span>
         </Link>
 
         {/* Desktop nav */}
-        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }} className="desktop-nav">
+        <div className="hidden md:flex items-center gap-6 h-full flex-1">
           {navItems.map((item) => {
-            const active = pathname === item.href
+            const active = pathname === item.href || pathname.startsWith(item.href + '/') && item.href !== '/student/dashboard'
             return (
-              <Link key={item.href} href={item.href} style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.4rem 0.75rem', borderRadius: '8px', textDecoration: 'none',
-                fontSize: '0.85rem', fontWeight: active ? 600 : 400,
-                color: active ? '#fbbf24' : 'rgba(248,250,252,0.75)',
-                background: active ? 'rgba(251,191,36,0.1)' : 'transparent',
-              }}>
-                <span>{item.icon}</span> {item.label}
+              <Link key={item.href} href={item.href} className={`
+                flex items-center h-full text-[14px] font-medium transition-colors relative
+                ${active ? 'text-[#10b981]' : 'text-slate-400 hover:text-slate-200'}
+              `}>
+                {item.label}
+                {active && (
+                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#10b981] rounded-t-full" />
+                )}
               </Link>
             )
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '0.85rem', color: 'rgba(248,250,252,0.6)', display: 'none' }} id="userName">{userName}</span>
+        <div className="flex items-center gap-5">
+          {/* Search bar */}
+          <div className="hidden lg:flex relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search resources..." 
+              className="bg-slate-800/50 border border-slate-700/50 text-slate-300 text-sm rounded-full pl-9 pr-4 py-2 w-[240px] focus:outline-none focus:border-slate-600 focus:bg-slate-800 transition-colors"
+            />
+          </div>
+
+          <button className="text-slate-400 hover:text-slate-200 transition-colors relative">
+            <Bell size={20} />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#111827]"></span>
+          </button>
+
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
-            style={{
-              padding: '0.4rem 0.875rem', borderRadius: '8px', border: 'none',
-              background: 'rgba(239,68,68,0.15)', color: '#fca5a5',
-              fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-            }}
+            className="hidden sm:block px-5 py-2 rounded-full border-none bg-blue-600 text-white text-[13px] font-semibold cursor-pointer transition-colors hover:bg-blue-700"
           >
             Sign Out
           </button>
+
+          <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 cursor-pointer hover:border-slate-500 transition-colors">
+            <User size={16} className="text-slate-400" />
+          </div>
         </div>
       </div>
 
-      {/* Mobile nav */}
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex', overflowX: 'auto', padding: '0.5rem 0.75rem', gap: '0.25rem',
-      }}>
+      {/* Mobile nav scrollable */}
+      <div className="md:hidden border-t border-slate-800 flex overflow-x-auto px-4 py-2 gap-4 no-scrollbar">
         {navItems.map((item) => {
           const active = pathname === item.href
           return (
-            <Link key={item.href} href={item.href} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              padding: '0.4rem 0.75rem', borderRadius: '8px', textDecoration: 'none',
-              fontSize: '0.7rem', fontWeight: active ? 600 : 400, whiteSpace: 'nowrap', flexShrink: 0,
-              color: active ? '#fbbf24' : 'rgba(248,250,252,0.65)',
-              background: active ? 'rgba(251,191,36,0.1)' : 'transparent',
-            }}>
-              <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+            <Link key={item.href} href={item.href} className={`
+              flex flex-col items-center px-2 py-2 rounded-lg text-decoration-none text-[12px] font-medium whitespace-nowrap shrink-0
+              ${active ? 'text-[#10b981] bg-[#10b981]/10' : 'text-slate-400'}
+            `}>
               {item.label}
             </Link>
           )

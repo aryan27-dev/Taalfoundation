@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Mail, Zap, CheckCircle2, Clock, AlertTriangle, FileX, X } from 'lucide-react'
 
 interface Fee {
   id: string
@@ -16,19 +17,12 @@ interface Fee {
   student: { id: string; name: string; email: string; batch?: { name: string } | null }
 }
 
-const statusColors: Record<string, { bg: string; color: string }> = {
-  PAID: { bg: 'rgba(34,197,94,0.1)', color: '#16a34a' },
-  PENDING: { bg: 'rgba(249,115,22,0.1)', color: '#f97316' },
-  OVERDUE: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
-  WAIVED: { bg: 'rgba(148,163,184,0.15)', color: '#64748b' },
+const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
+  PAID: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2 },
+  PENDING: { bg: 'bg-orange-100', text: 'text-orange-700', icon: Clock },
+  OVERDUE: { bg: 'bg-rose-100', text: 'text-rose-700', icon: AlertTriangle },
+  WAIVED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: FileX },
 }
-
-const btn = (v: 'primary' | 'ghost' | 'danger' = 'primary') => ({
-  padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 600,
-  fontSize: '0.85rem', cursor: 'pointer',
-  background: v === 'primary' ? 'linear-gradient(45deg,#f97316,#fbbf24)' : v === 'danger' ? 'rgba(239,68,68,0.1)' : '#f1f5f9',
-  color: v === 'primary' ? '#0f172a' : v === 'danger' ? '#ef4444' : '#374151',
-})
 
 export default function FeesClient({ fees: initial, summary, collectedThisMonth }: {
   fees: Fee[]
@@ -81,101 +75,159 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="font-inter space-y-6 max-w-7xl mx-auto p-4 md:p-8">
+      <div className="flex justify-between items-start flex-wrap gap-4 mb-2">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Fees</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0' }}>Collected this month: <strong style={{ color: '#22c55e' }}>{formatCurrency(collectedThisMonth)}</strong></p>
+          <h1 className="text-3xl font-bold text-slate-900 m-0">Fees Management</h1>
+          <p className="text-slate-500 mt-2 m-0 text-base">Collected this month: <strong className="text-[#10b981]">{formatCurrency(collectedThisMonth)}</strong></p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button style={btn('ghost')} onClick={remind} disabled={loading}>📧 Send Reminders</button>
-          <button style={btn('primary')} onClick={generate} disabled={loading}>⚡ Generate This Month&apos;s Fees</button>
+        <div className="flex gap-3 flex-wrap">
+          <button 
+            onClick={remind} 
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <Mail size={16} /> Send Reminders
+          </button>
+          <button 
+            onClick={generate} 
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50 border-none"
+          >
+            <Zap size={16} /> Generate This Month&apos;s Fees
+          </button>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {['PENDING', 'PAID', 'OVERDUE', 'WAIVED'].map((s) => {
           const stat = getStat(s)
-          const { bg, color } = statusColors[s]
+          const { bg, text, icon: Icon } = statusColors[s]
+          const isSelected = tab === s
           return (
-            <button key={s} onClick={() => setTab(s as typeof tab)} style={{
-              padding: '1.25rem', borderRadius: '12px', background: tab === s ? bg : '#fff',
-              border: `2px solid ${tab === s ? color : '#e2e8f0'}`, cursor: 'pointer', textAlign: 'left',
-            }}>
-              <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{s}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '1.25rem', fontWeight: 700, color }}>{formatCurrency(stat?._sum.amount || 0)}</p>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>{stat?._count || 0} fees</p>
+            <button 
+              key={s} 
+              onClick={() => setTab(s as typeof tab)} 
+              className={`text-left p-5 rounded-2xl transition-all cursor-pointer border-2 ${
+                isSelected ? `border-blue-500 ${bg}` : 'border-slate-200 bg-white hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Icon size={16} className={isSelected ? 'text-blue-700' : 'text-slate-400'} />
+                <p className="m-0 text-xs font-bold text-slate-500 uppercase tracking-wider">{s}</p>
+              </div>
+              <p className={`m-0 text-2xl font-bold ${isSelected ? 'text-blue-900' : text}`}>{formatCurrency(stat?._sum.amount || 0)}</p>
+              <p className="m-0 mt-1 text-xs font-medium text-slate-500">{stat?._count || 0} fees</p>
             </button>
           )
         })}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
         {(['ALL', 'PENDING', 'PAID', 'OVERDUE', 'WAIVED'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: '0.4rem 1rem', borderRadius: '999px', border: 'none', fontSize: '0.85rem',
-            fontWeight: tab === t ? 700 : 500, cursor: 'pointer',
-            background: tab === t ? '#0f172a' : '#f1f5f9', color: tab === t ? '#fff' : '#374151',
-          }}>{t}</button>
+          <button 
+            key={t} 
+            onClick={() => setTab(t)} 
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors decoration-none border-none cursor-pointer whitespace-nowrap ${
+              tab === t ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {t === 'ALL' ? 'All Fees' : t}
+          </button>
         ))}
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              {['Student', 'Month', 'Amount', 'Due Date', 'Status', 'Actions'].map((h) => (
-                <th key={h} style={{ textAlign: 'left', padding: '0.875rem 1rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((f) => {
-              const { bg, color } = statusColors[f.status] || { bg: '#f1f5f9', color: '#374151' }
-              return (
-                <tr key={f.id} style={{ borderBottom: '1px solid #f8fafc' }}>
-                  <td style={{ padding: '0.875rem 1rem' }}>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{f.student.name}</p>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>{f.student.email}</p>
-                  </td>
-                  <td style={{ padding: '0.875rem 1rem', color: '#475569' }}>{f.month || f.feeType.replace('_', ' ')}</td>
-                  <td style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>{formatCurrency(f.amount)}</td>
-                  <td style={{ padding: '0.875rem 1rem', color: '#64748b', fontSize: '0.8rem' }}>{formatDate(f.dueDate)}</td>
-                  <td style={{ padding: '0.875rem 1rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '3px 8px', borderRadius: '999px', background: bg, color }}>{f.status}</span>
-                  </td>
-                  <td style={{ padding: '0.875rem 1rem' }}>
-                    {f.status === 'PENDING' || f.status === 'OVERDUE' ? (
-                      <button style={{ ...btn('ghost'), padding: '0.35rem 0.65rem', fontSize: '0.8rem' }} onClick={() => { setWaiveId(f.id); setWaiveReason('') }}>Waive</button>
-                    ) : null}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No fees found</div>}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                {['Student', 'Month', 'Amount', 'Due Date', 'Status', 'Actions'].map((h) => (
+                  <th key={h} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map((f) => {
+                const { bg, text, icon: Icon } = statusColors[f.status] || { bg: 'bg-slate-100', text: 'text-slate-700', icon: CheckCircle2 }
+                return (
+                  <tr key={f.id} className="hover:bg-slate-50 transition-colors bg-white">
+                    <td className="px-6 py-4">
+                      <p className="m-0 font-bold text-slate-900">{f.student.name}</p>
+                      <p className="m-0 mt-0.5 text-xs font-medium text-slate-500">{f.student.email}</p>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 font-medium">{f.month || f.feeType.replace('_', ' ')}</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{formatCurrency(f.amount)}</td>
+                    <td className="px-6 py-4 text-slate-600">{formatDate(f.dueDate)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${bg} ${text}`}>
+                        <Icon size={14} /> {f.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {f.status === 'PENDING' || f.status === 'OVERDUE' ? (
+                        <button 
+                          className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer"
+                          onClick={() => { setWaiveId(f.id); setWaiveReason('') }}
+                        >
+                          Waive
+                        </button>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="p-12 text-center text-slate-500 font-medium flex flex-col items-center">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                <FileX size={32} />
+              </div>
+              No fees found for this category.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Waive modal */}
       {waiveId && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '2rem', width: '100%', maxWidth: '400px' }}>
-            <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Waive Fee</h3>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '6px' }}>Reason for waiver *</label>
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="m-0 text-xl font-bold text-slate-900">Waive Fee</h3>
+              <button onClick={() => setWaiveId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <label className="block font-semibold text-sm mb-1.5 text-slate-700">Reason for waiver <span className="text-rose-500">*</span></label>
             <textarea
               value={waiveReason}
               onChange={(e) => setWaiveReason(e.target.value)}
               rows={3}
               placeholder="e.g. Financial hardship, scholarship, etc."
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box' }}
+              className="w-full p-3 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all box-border resize-y text-slate-900 font-medium"
             />
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-              <button style={btn('ghost')} onClick={() => setWaiveId(null)}>Cancel</button>
-              <button style={btn('danger')} onClick={waive}>Waive Fee</button>
+            
+            <div className="flex gap-3 justify-end mt-6">
+              <button 
+                onClick={() => setWaiveId(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={waive}
+                className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer"
+              >
+                Waive Fee
+              </button>
             </div>
           </div>
         </div>

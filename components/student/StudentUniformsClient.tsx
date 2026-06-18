@@ -3,17 +3,18 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { ShoppingBag, PackageSearch, Trash2, CheckCircle2 } from 'lucide-react'
 
 interface UniformItem { id: string; name: string; price: number; sizes: string[]; category: string; stock: number; description?: string }
 interface OrderItem { item: UniformItem; size: string; quantity: number; price: number }
 interface Order { id: string; totalAmount: number; status: string; orderedAt: string; items: OrderItem[] }
 
-const statusColors: Record<string, { bg: string; color: string }> = {
-  PENDING: { bg: 'rgba(249,115,22,0.1)', color: '#f97316' },
-  CONFIRMED: { bg: 'rgba(59,130,246,0.1)', color: '#3b82f6' },
-  READY: { bg: 'rgba(168,85,247,0.1)', color: '#a855f7' },
-  DELIVERED: { bg: 'rgba(34,197,94,0.1)', color: '#16a34a' },
-  CANCELLED: { bg: 'rgba(100,116,139,0.1)', color: '#64748b' },
+const statusColors: Record<string, { bg: string; text: string }> = {
+  PENDING: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  READY: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  DELIVERED: { bg: 'bg-green-100', text: 'text-green-700' },
+  CANCELLED: { bg: 'bg-slate-100', text: 'text-slate-700' },
 }
 
 export default function StudentUniformsClient({ catalog, orders: initialOrders }: { catalog: UniformItem[]; orders: Order[] }) {
@@ -54,97 +55,141 @@ export default function StudentUniformsClient({ catalog, orders: initialOrders }
   }
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: '0 0 1.25rem' }}>Uniforms & Accessories</h1>
+    <div className="font-inter space-y-6">
+      <h1 className="text-2xl font-bold text-slate-900 m-0">Uniforms & Accessories</h1>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        {[{ key: 'shop', label: '🛍️ Shop' }, { key: 'orders', label: `📦 My Orders (${orders.length})` }].map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key as 'shop' | 'orders')} style={{
-            padding: '0.5rem 1.25rem', borderRadius: '999px', border: 'none', fontSize: '0.9rem',
-            fontWeight: tab === key ? 700 : 500, cursor: 'pointer',
-            background: tab === key ? '#0f172a' : '#f1f5f9', color: tab === key ? '#fff' : '#374151',
-          }}>{label}</button>
+      <div className="flex gap-2">
+        {[{ key: 'shop', label: 'Shop', icon: ShoppingBag }, { key: 'orders', label: `My Orders (${orders.length})`, icon: PackageSearch }].map(({ key, label, icon: Icon }) => (
+          <button 
+            key={key} 
+            onClick={() => setTab(key as 'shop' | 'orders')} 
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors decoration-none border-none cursor-pointer ${
+              tab === key ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Icon size={16} />
+            {label}
+          </button>
         ))}
       </div>
 
       {tab === 'shop' && (
-        <>
+        <div className="space-y-5">
           {/* Cart summary */}
           {cart.length > 0 && (
-            <div style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)', borderRadius: '14px', padding: '1.25rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
               <div>
-                <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>{cart.reduce((s, c) => s + c.quantity, 0)} items in cart</p>
-                <p style={{ margin: '2px 0 0', color: 'rgba(15,23,42,0.65)', fontSize: '0.875rem' }}>Total: {formatCurrency(cartTotal)}</p>
+                <p className="font-bold text-blue-900 text-lg m-0 flex items-center gap-2">
+                  <ShoppingBag size={18} className="text-blue-600" />
+                  {cart.reduce((s, c) => s + c.quantity, 0)} items in cart
+                </p>
+                <p className="text-blue-700 text-sm mt-1 m-0 font-medium">Total: {formatCurrency(cartTotal)}</p>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => setCart([])} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: 'rgba(15,23,42,0.15)', color: '#0f172a', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
-                <button onClick={placeOrder} disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f172a', color: '#fbbf24', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
-                  {loading ? 'Placing…' : 'Place Order'}
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setCart([])} 
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-blue-200 text-slate-600 font-semibold text-sm transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <Trash2 size={14} /> Clear
+                </button>
+                <button 
+                  onClick={placeOrder} 
+                  disabled={loading} 
+                  className={`px-6 py-2.5 rounded-xl text-white font-semibold text-sm transition-colors border-none shadow-sm flex items-center gap-1.5 ${
+                    loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                  }`}
+                >
+                  {loading ? 'Placing…' : <><CheckCircle2 size={16} /> Place Order</>}
                 </button>
               </div>
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {catalog.map((item) => (
-              <div key={item.id} style={{ background: '#fff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>{item.category}</span>
-                  <span style={{ fontSize: '0.75rem', color: item.stock > 5 ? '#16a34a' : item.stock > 0 ? '#f97316' : '#ef4444', fontWeight: 600 }}>
+              <div key={item.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 uppercase tracking-wide">
+                    {item.category}
+                  </span>
+                  <span className={`text-xs font-bold ${item.stock > 5 ? 'text-[#10b981]' : item.stock > 0 ? 'text-orange-500' : 'text-rose-500'}`}>
                     {item.stock > 0 ? `${item.stock} left` : 'Out of stock'}
                   </span>
                 </div>
-                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{item.name}</h3>
-                {item.description && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#64748b' }}>{item.description}</p>}
-                <p style={{ margin: '0 0 0.75rem', fontSize: '1.25rem', fontWeight: 700, color: '#f97316' }}>{formatCurrency(item.price)}</p>
-                {item.stock > 0 && (
-                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                    {item.sizes.map((size) => (
-                      <button key={size} onClick={() => addToCart(item.id, size)} style={{
-                        padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1.5px solid #e2e8f0',
-                        fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', background: '#f8fafc',
-                        color: '#374151',
-                      }}>{size}</button>
-                    ))}
-                  </div>
-                )}
+                <h3 className="m-0 text-lg font-bold text-slate-900 mb-2">{item.name}</h3>
+                {item.description && <p className="m-0 text-sm text-slate-500 mb-4 flex-1">{item.description}</p>}
+                
+                <div className="mt-auto">
+                  <p className="m-0 text-xl font-bold text-slate-900 mb-4">{formatCurrency(item.price)}</p>
+                  {item.stock > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {item.sizes.map((size) => (
+                        <button 
+                          key={size} 
+                          onClick={() => addToCart(item.id, size)} 
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 text-slate-700 text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
 
           {catalog.length === 0 && (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8', background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-              No items available yet
+            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                <ShoppingBag size={32} />
+              </div>
+              <p className="text-slate-500 font-medium m-0">No items available yet.</p>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {tab === 'orders' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="space-y-4">
           {orders.map((order) => {
-            const { bg, color } = statusColors[order.status] || { bg: '#f1f5f9', color: '#374151' }
+            const { bg, text } = statusColors[order.status] || { bg: 'bg-slate-100', text: 'text-slate-700' }
             return (
-              <div key={order.id} style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Order · {formatDate(order.orderedAt)}</p>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, padding: '3px 10px', borderRadius: '999px', background: bg, color }}>{order.status}</span>
-                </div>
-                {order.items.map((oi, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#475569', padding: '0.25rem 0' }}>
-                    <span>{oi.item.name} — Size {oi.size} × {oi.quantity}</span>
-                    <span style={{ fontWeight: 600 }}>{formatCurrency(oi.price * oi.quantity)}</span>
+              <div key={order.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-start mb-4 flex-wrap gap-3">
+                  <div>
+                    <p className="m-0 text-xs font-bold text-slate-500 uppercase tracking-wider">Order Placed</p>
+                    <p className="m-0 text-sm font-medium text-slate-900 mt-1">{formatDate(order.orderedAt)}</p>
                   </div>
-                ))}
-                <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                  <strong>Total: {formatCurrency(order.totalAmount)}</strong>
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide ${bg} ${text}`}>
+                    {order.status}
+                  </span>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  {order.items.map((oi, i) => (
+                    <div key={i} className="flex justify-between items-center text-sm">
+                      <span className="text-slate-700 font-medium">
+                        {oi.item.name} <span className="text-slate-400 mx-1">—</span> Size {oi.size} <span className="text-slate-400 mx-1">×</span> {oi.quantity}
+                      </span>
+                      <span className="font-bold text-slate-900">{formatCurrency(oi.price * oi.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
+                  <span className="font-bold text-slate-900 text-lg">Total</span>
+                  <span className="font-bold text-blue-600 text-xl">{formatCurrency(order.totalAmount)}</span>
                 </div>
               </div>
             )
           })}
           {orders.length === 0 && (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8', background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-              No orders yet. Browse the shop tab to order uniforms.
+            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                <PackageSearch size={32} />
+              </div>
+              <p className="text-slate-500 font-medium m-0">No orders yet. Browse the shop tab to order uniforms.</p>
             </div>
           )}
         </div>

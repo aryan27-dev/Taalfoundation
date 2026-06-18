@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import { CheckCircle2, TrendingUp, Calendar, Megaphone, Clock, CalendarDays, ExternalLink, GraduationCap } from 'lucide-react'
 
 interface Props {
   user: {
@@ -19,125 +20,181 @@ export default function StudentDashboardClient({ user, pendingFee, upcomingEvent
   const attendancePct = attendanceStats.total > 0 ? Math.round((attendanceStats.present / attendanceStats.total) * 100) : 0
 
   return (
-    <div>
+    <div className="font-inter space-y-6">
       {/* Welcome */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-slate-900 m-0 flex items-center gap-2">
           Welcome back, {user?.name?.split(' ')[0]}! 👋
         </h1>
-        <p style={{ color: '#64748b', margin: '4px 0 0' }}>{user?.batch?.name || 'No batch assigned'}</p>
-      </div>
-
-      {/* Quick stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        {/* Fee status */}
-        <div style={{
-          background: pendingFee ? 'linear-gradient(135deg,#fef3c7,#fff7ed)' : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
-          borderRadius: '16px', padding: '1.25rem',
-          border: `1px solid ${pendingFee ? '#fbbf24' : '#86efac'}`,
-        }}>
-          <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 600, color: pendingFee ? '#92400e' : '#166534', textTransform: 'uppercase' }}>Fee Status</p>
-          <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: pendingFee ? '#f97316' : '#16a34a' }}>
-            {pendingFee ? formatCurrency(pendingFee.amount) : '✓ Paid'}
-          </p>
-          {pendingFee && <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#92400e' }}>Due {formatDate(pendingFee.dueDate)}</p>}
-        </div>
-
-        {/* Attendance */}
-        <div style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)', borderRadius: '16px', padding: '1.25rem', border: '1px solid #93c5fd' }}>
-          <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 600, color: '#1d4ed8', textTransform: 'uppercase' }}>This Month</p>
-          <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#1d4ed8' }}>{attendancePct}%</p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#93c5fd' }}>{attendanceStats.present}/{attendanceStats.total} classes</p>
-        </div>
-
-        {/* Monthly fee */}
-        <div style={{ background: 'linear-gradient(135deg,#faf5ff,#f3e8ff)', borderRadius: '16px', padding: '1.25rem', border: '1px solid #d8b4fe' }}>
-          <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 600, color: '#7e22ce', textTransform: 'uppercase' }}>Monthly Fee</p>
-          <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#7e22ce' }}>
-            {user?.feeStructure ? formatCurrency(user.feeStructure.currentAmount) : '—'}
-          </p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#c4b5fd' }}>per month</p>
-        </div>
+        <p className="text-slate-600 mt-2 flex items-center gap-2">
+          <GraduationCap size={18} />
+          {user?.batch?.name || 'No batch assigned'}
+        </p>
       </div>
 
       {/* Pay fee banner */}
       {pendingFee && (
-        <div style={{
-          background: 'linear-gradient(135deg,#f97316,#fbbf24)',
-          borderRadius: '16px', padding: '1.25rem 1.5rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem',
-        }}>
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p style={{ margin: 0, fontWeight: 700, color: '#0f172a', fontSize: '1.05rem' }}>
+            <p className="font-bold text-rose-900 text-lg m-0 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
               Fee due: {formatCurrency(pendingFee.amount)} {pendingFee.month ? `for ${pendingFee.month}` : ''}
             </p>
-            <p style={{ margin: '2px 0 0', color: 'rgba(15,23,42,0.65)', fontSize: '0.875rem' }}>Due on {formatDate(pendingFee.dueDate)}</p>
+            <p className="text-rose-700 text-sm mt-1 m-0">Due on {formatDate(pendingFee.dueDate)}</p>
           </div>
-          <Link href="/student/fees" style={{
-            padding: '0.625rem 1.5rem', background: '#0f172a', color: '#fbbf24',
-            borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none',
-          }}>Pay Now →</Link>
+          <Link href="/student/fees" className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold text-sm transition-colors decoration-none">
+            Pay Now →
+          </Link>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+      {/* Quick stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Fee status */}
+        <div className={`bg-white rounded-2xl p-6 border ${pendingFee ? 'border-rose-200' : 'border-[#10b981]'}`}>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">Fee Status</p>
+          <div className="flex items-center gap-3 mt-4">
+            {pendingFee ? (
+              <>
+                <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                  <span className="text-rose-600 text-xl font-bold">!</span>
+                </div>
+                <p className="text-3xl font-bold text-rose-600 m-0">Pending</p>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={36} className="text-[#10b981]" strokeWidth={2.5} />
+                <p className="text-3xl font-bold text-[#10b981] m-0">Paid</p>
+              </>
+            )}
+          </div>
+          <p className="text-slate-500 text-sm mt-4 m-0">
+            {pendingFee ? `Due: ${formatDate(pendingFee.dueDate)}` : 'Up to date'}
+          </p>
+        </div>
+
+        {/* Attendance */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">This Month</p>
+          <div className="flex items-center gap-3 mt-4">
+            <p className="text-4xl font-bold text-slate-900 m-0">{attendancePct}%</p>
+            <div className="ml-auto w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+              <TrendingUp className="text-blue-500" size={24} />
+            </div>
+          </div>
+          <p className="text-slate-500 text-sm mt-4 m-0">{attendanceStats.present} / {attendanceStats.total} classes attended</p>
+        </div>
+
+        {/* Monthly fee */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">Monthly Fee</p>
+          <div className="mt-4">
+            <p className="text-3xl font-bold text-slate-900 m-0 inline-block">
+              {user?.feeStructure ? formatCurrency(user.feeStructure.currentAmount) : '—'}
+            </p>
+            <span className="text-slate-500 ml-2">/ month</span>
+          </div>
+          <p className="text-slate-500 text-sm mt-4 m-0">Recurring payment</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Upcoming events */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Upcoming Events</h2>
-            <Link href="/student/events" style={{ fontSize: '0.8rem', color: '#f97316', fontWeight: 600 }}>View all →</Link>
-          </div>
-          {upcomingEvents.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: 0 }}>No upcoming events</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {upcomingEvents.map((ev) => (
-                <div key={ev.id} style={{ padding: '0.875rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem', color: '#0f172a' }}>{ev.title}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                    {formatDate(ev.eventDate)} · {ev.feeAmount > 0 ? formatCurrency(ev.feeAmount) : 'Free'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent announcements */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Latest Notices</h2>
-            <Link href="/student/announcements" style={{ fontSize: '0.8rem', color: '#f97316', fontWeight: 600 }}>View all →</Link>
-          </div>
-          {announcements.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: 0 }}>No announcements</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {announcements.map((ann) => (
-                <div key={ann.id} style={{ padding: '0.875rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem', color: '#0f172a' }}>{ann.title}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{formatDate(ann.createdAt)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Class schedule */}
-        {user?.batch && (
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
-            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>My Class Schedule</h2>
-            <div style={{ padding: '1rem', background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)', borderRadius: '10px' }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#0f172a' }}>{user.batch.name}</p>
-              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.9rem' }}>{user.batch.schedule}</p>
-            </div>
-            <Link href="/student/schedule" style={{ display: 'block', textAlign: 'center', marginTop: '1rem', color: '#f97316', fontSize: '0.85rem', fontWeight: 600 }}>
-              View full schedule →
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col h-full">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-slate-900 m-0">Upcoming Events</h2>
+            <Link href="/student/events" className="text-blue-500 hover:text-blue-600 text-sm font-semibold decoration-none">
+              View all →
             </Link>
           </div>
-        )}
+          {upcomingEvents.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-10">
+              <div className="w-16 h-16 bg-blue-50 text-blue-200 rounded-full flex items-center justify-center mb-4">
+                <CalendarDays size={32} strokeWidth={1.5} />
+              </div>
+              <p className="text-slate-500 text-sm m-0">No upcoming events scheduled for this week.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 flex-1">
+              {upcomingEvents.slice(0, 3).map((ev) => (
+                <div key={ev.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-4">
+                  <div className="bg-white w-12 h-12 rounded-lg border border-slate-200 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-xs text-blue-500 font-bold uppercase">{new Date(ev.eventDate).toLocaleDateString('en-US', { month: 'short' })}</span>
+                    <span className="text-lg font-bold text-slate-900 leading-none">{new Date(ev.eventDate).getDate()}</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 m-0">{ev.title}</p>
+                    <p className="text-sm text-slate-500 m-0 mt-1">
+                      {ev.feeAmount > 0 ? formatCurrency(ev.feeAmount) : 'Free Event'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-5">
+          {/* Class schedule */}
+          {user?.batch && (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200">
+              <h2 className="text-xl font-bold text-slate-900 m-0 mb-6">My Class Schedule</h2>
+              <div className="bg-blue-50 rounded-xl p-5 mb-5 border border-blue-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0">
+                    <Clock size={20} />
+                  </div>
+                  <p className="font-bold text-slate-900 text-lg m-0">{user.batch.name}</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <Calendar size={18} className="text-slate-400" />
+                    <span className="text-sm">Class Schedule</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <Clock size={18} className="text-slate-400" />
+                    <span className="text-sm">{user.batch.schedule}</span>
+                  </div>
+                </div>
+              </div>
+              <Link href="/student/schedule" className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-blue-200 text-blue-600 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors decoration-none">
+                View full schedule <ExternalLink size={16} />
+              </Link>
+            </div>
+          )}
+
+          {/* Recent announcements */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 flex-1 flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-900 m-0">Latest Notices</h2>
+              <Link href="/student/announcements" className="text-blue-500 hover:text-blue-600 text-sm font-semibold decoration-none">
+                View all →
+              </Link>
+            </div>
+            {announcements.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-6">
+                <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                  <Megaphone size={32} strokeWidth={1.5} />
+                </div>
+                <p className="text-slate-500 text-sm m-0">No new announcements at the moment.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {announcements.slice(0, 2).map((ann) => (
+                  <div key={ann.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex gap-4">
+                    <Megaphone className="text-slate-400 shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <p className="font-semibold text-slate-900 text-sm m-0">{ann.title}</p>
+                      <p className="text-xs text-slate-500 m-0 mt-1">{formatDate(ann.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
+

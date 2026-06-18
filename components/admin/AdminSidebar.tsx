@@ -3,75 +3,56 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { LayoutDashboard, Users, CheckSquare, IndianRupee, Calendar, Shirt, Megaphone, Clock, LogOut } from 'lucide-react'
 
 const navItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/students', label: 'Students', icon: '👥' },
-  { href: '/admin/attendance', label: 'Attendance', icon: '✅' },
-  { href: '/admin/fees', label: 'Fees', icon: '💰' },
-  { href: '/admin/events', label: 'Events', icon: '🎭' },
-  { href: '/admin/uniforms', label: 'Uniforms', icon: '👗' },
-  { href: '/admin/announcements', label: 'Announcements', icon: '📢' },
-  { href: '/admin/schedule', label: 'Schedule', icon: '🗓️' },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/students', label: 'Students', icon: Users },
+  { href: '/admin/attendance', label: 'Attendance', icon: CheckSquare },
+  { href: '/admin/fees', label: 'Fees', icon: IndianRupee },
+  { href: '/admin/events', label: 'Events', icon: Calendar },
+  { href: '/admin/uniforms', label: 'Uniforms', icon: Shirt },
+  { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/admin/schedule', label: 'Schedule', icon: Clock },
 ]
 
 export default function AdminSidebar({ adminName }: { adminName: string }) {
   const pathname = usePathname()
 
   return (
-    <aside style={{
-      width: '240px',
-      minWidth: '240px',
-      background: '#0f172a',
-      color: '#f8fafc',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
-      overflow: 'hidden',
-    }}>
+    <aside className="w-64 min-w-[256px] bg-[#111827] text-slate-300 flex flex-col h-screen sticky top-0 overflow-hidden font-inter">
       {/* Logo */}
-      <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem',
-        }}>
-          <div style={{
-            width: '36px', height: '36px', background: 'linear-gradient(45deg,#f97316,#fbbf24)',
-            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.1rem', flexShrink: 0,
-          }}>🎭</div>
+      <div className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#10b981] rounded-xl flex items-center justify-center shrink-0">
+            <span className="text-white text-xl">🎓</span>
+          </div>
           <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem' }}>Taal Foundation</p>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Admin Portal</p>
+            <p className="m-0 font-bold text-[15px] text-white">Taal Foundation</p>
+            <p className="m-0 text-xs text-slate-500 font-medium">Admin Portal</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '1rem 0.75rem', overflow: 'auto' }}>
+      <nav className="flex-1 px-4 overflow-y-auto mt-2">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          const Icon = item.icon
           return (
             <Link
               key={item.href}
               href={item.href}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.7rem 0.875rem',
-                borderRadius: '10px',
-                marginBottom: '2px',
-                fontSize: '0.9rem',
-                fontWeight: active ? 600 : 400,
-                color: active ? '#fbbf24' : 'rgba(248,250,252,0.75)',
-                background: active ? 'rgba(251,191,36,0.12)' : 'transparent',
-                textDecoration: 'none',
-                transition: 'background 0.15s, color 0.15s',
-              }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-[14px] transition-colors relative ${
+                active 
+                  ? 'bg-white/10 text-white font-medium' 
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+              }`}
             >
-              <span style={{ fontSize: '1.1rem', width: '20px', textAlign: 'center' }}>{item.icon}</span>
+              {active && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#10b981] rounded-r-full" />
+              )}
+              <Icon size={18} strokeWidth={active ? 2.5 : 2} className={active ? "text-[#10b981]" : ""} />
               {item.label}
             </Link>
           )
@@ -79,19 +60,21 @@ export default function AdminSidebar({ adminName }: { adminName: string }) {
       </nav>
 
       {/* User footer */}
-      <div style={{ padding: '1rem 0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ padding: '0.75rem', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
-          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>{adminName}</p>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Administrator</p>
+      <div className="p-4 mt-auto">
+        <div className="flex items-center gap-3 p-3 mb-2">
+          <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+            <span className="text-slate-300 text-sm font-semibold">{adminName.charAt(0)}</span>
+          </div>
+          <div>
+            <p className="m-0 text-[14px] font-semibold text-white truncate max-w-[120px]">{adminName}</p>
+            <p className="m-0 text-xs text-slate-500">Administrator</p>
+          </div>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          style={{
-            width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none',
-            background: 'rgba(239,68,68,0.15)', color: '#fca5a5', fontSize: '0.85rem',
-            fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s',
-          }}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-none bg-rose-500/10 text-rose-400 text-[14px] font-semibold cursor-pointer transition-colors hover:bg-rose-500/20"
         >
+          <LogOut size={16} />
           Sign Out
         </button>
       </div>

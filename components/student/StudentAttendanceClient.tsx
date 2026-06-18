@@ -1,14 +1,15 @@
 'use client'
 
 import { formatDate } from '@/lib/utils'
+import { CheckCircle2, XCircle, Clock, FileText, AlertCircle } from 'lucide-react'
 
 interface AttendanceRecord { id: string; date: string; status: string; notes?: string | null }
 
-const statusStyle: Record<string, { bg: string; color: string; emoji: string }> = {
-  PRESENT: { bg: 'rgba(34,197,94,0.15)', color: '#16a34a', emoji: '✓' },
-  ABSENT: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', emoji: '✗' },
-  LATE: { bg: 'rgba(249,115,22,0.15)', color: '#f97316', emoji: '⏰' },
-  EXCUSED: { bg: 'rgba(59,130,246,0.15)', color: '#3b82f6', emoji: '📋' },
+const statusStyle: Record<string, { bg: string; text: string; icon: any }> = {
+  PRESENT: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2 },
+  ABSENT: { bg: 'bg-rose-100', text: 'text-rose-700', icon: XCircle },
+  LATE: { bg: 'bg-orange-100', text: 'text-orange-700', icon: Clock },
+  EXCUSED: { bg: 'bg-blue-100', text: 'text-blue-700', icon: FileText },
 }
 
 export default function StudentAttendanceClient({
@@ -21,55 +22,65 @@ export default function StudentAttendanceClient({
   const pct = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0
 
   return (
-    <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: '0 0 1.25rem' }}>My Attendance</h1>
+    <div className="font-inter">
+      <h1 className="text-2xl font-bold text-slate-900 m-0 mb-6">My Attendance</h1>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Attendance Rate', value: `${pct}%`, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
-          { label: 'Present', value: stats.present, color: '#16a34a', bg: 'rgba(34,197,94,0.08)' },
-          { label: 'Absent', value: stats.absent, color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
-          { label: 'Late', value: stats.late, color: '#f97316', bg: 'rgba(249,115,22,0.08)' },
+          { label: 'Attendance Rate', value: `${pct}%`, color: 'text-blue-600' },
+          { label: 'Present', value: stats.present, color: 'text-[#10b981]' },
+          { label: 'Absent', value: stats.absent, color: 'text-rose-600' },
+          { label: 'Late', value: stats.late, color: 'text-orange-500' },
         ].map((s) => (
-          <div key={s.label} style={{ background: s.bg, borderRadius: '14px', padding: '1.25rem', border: `1px solid ${s.color}30` }}>
-            <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{s.label}</p>
-            <p style={{ margin: '4px 0 0', fontSize: '1.5rem', fontWeight: 700, color: s.color }}>{s.value}</p>
+          <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider m-0">{s.label}</p>
+            <p className={`text-3xl font-bold m-0 mt-2 ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Progress bar */}
-      <div style={{ background: '#fff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>Overall Attendance</span>
-          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: pct >= 75 ? '#16a34a' : '#ef4444' }}>{pct}%</span>
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm font-bold text-slate-700">Overall Attendance</span>
+          <span className={`text-sm font-bold ${pct >= 75 ? 'text-[#10b981]' : 'text-rose-600'}`}>{pct}%</span>
         </div>
-        <div style={{ height: '10px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${pct}%`, background: pct >= 75 ? 'linear-gradient(90deg,#22c55e,#16a34a)' : 'linear-gradient(90deg,#ef4444,#dc2626)', borderRadius: '999px', transition: 'width 0.5s ease' }} />
+        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${pct >= 75 ? 'bg-[#10b981]' : 'bg-rose-500'}`} 
+            style={{ width: `${pct}%` }} 
+          />
         </div>
-        {pct < 75 && <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#ef4444' }}>⚠️ Attendance below 75% — please attend more classes</p>}
+        {pct < 75 && (
+          <p className="mt-3 text-sm text-rose-500 flex items-center gap-1.5 m-0 font-medium">
+            <AlertCircle size={16} /> Attendance below 75% — please attend more classes
+          </p>
+        )}
       </div>
 
       {/* Records */}
-      <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+          <h2 className="text-sm font-bold text-slate-800 m-0">Recent Records</h2>
+        </div>
         {attendance.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No attendance records yet</div>
+          <div className="p-10 text-center text-slate-500 font-medium">No attendance records yet</div>
         ) : (
-          attendance.map((rec, i) => {
-            const { bg, color, emoji } = statusStyle[rec.status] || statusStyle.PRESENT
-            return (
-              <div key={rec.id} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.875rem 1.25rem', borderBottom: i < attendance.length - 1 ? '1px solid #f1f5f9' : 'none',
-              }}>
-                <span style={{ color: '#475569', fontSize: '0.9rem' }}>{formatDate(rec.date)}</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, padding: '3px 10px', borderRadius: '999px', background: bg, color }}>
-                  {emoji} {rec.status}
-                </span>
-              </div>
-            )
-          })
+          <div className="divide-y divide-slate-100">
+            {attendance.map((rec) => {
+              const { bg, text, icon: Icon } = statusStyle[rec.status] || statusStyle.PRESENT
+              return (
+                <div key={rec.id} className="flex justify-between items-center px-6 py-4 hover:bg-slate-50 transition-colors">
+                  <span className="text-slate-700 font-medium">{formatDate(rec.date)}</span>
+                  <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${bg} ${text}`}>
+                    <Icon size={14} />
+                    {rec.status}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
     </div>
