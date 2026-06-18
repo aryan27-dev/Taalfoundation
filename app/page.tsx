@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Logo from '@/components/Logo'
 
 export default function HomePage() {
   const [form, setForm] = useState({
@@ -53,7 +54,9 @@ export default function HomePage() {
         }}
       >
         <nav className="nav">
-          <div className="brand">Taal Foundation</div>
+          <div className="brand">
+            <Logo size={52} priority />
+          </div>
           <div className="nav-links">
             <a href="#about">About</a>
             <a href="#services">Services</a>
@@ -234,7 +237,7 @@ export default function HomePage() {
 
       <footer className="footer">
         <div>
-          <h3>Taal Foundation</h3>
+          <Logo size={64} />
           <p>Empowering dancers through rhythm, discipline, and artistry.</p>
         </div>
         <div className="footer-links">

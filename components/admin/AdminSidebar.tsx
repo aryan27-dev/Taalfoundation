@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { LayoutDashboard, Users, CheckSquare, IndianRupee, Calendar, Shirt, Megaphone, Clock, LogOut } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,11 +25,8 @@ export default function AdminSidebar({ adminName }: { adminName: string }) {
       {/* Logo */}
       <div className="p-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#10b981] rounded-xl flex items-center justify-center shrink-0">
-            <span className="text-white text-xl">🎓</span>
-          </div>
+          <Logo size={48} />
           <div>
-            <p className="m-0 font-bold text-[15px] text-white">Taal Foundation</p>
             <p className="m-0 text-xs text-slate-500 font-medium">Admin Portal</p>
           </div>
         </div>

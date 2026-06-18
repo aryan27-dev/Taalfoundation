@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { useState } from 'react'
 import { Search, Bell, User } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 const navItems = [
   { href: '/student/dashboard', label: 'Home' },
@@ -22,8 +22,8 @@ export default function StudentNav({ userName }: { userName: string }) {
     <nav className="bg-[#111827] text-slate-200 sticky top-0 z-40 border-b border-slate-800 font-inter">
       <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-[72px]">
         {/* Logo */}
-        <Link href="/student/dashboard" className="flex items-center gap-2 text-decoration-none mr-8">
-          <span className="text-[#10b981] font-bold text-lg">Taal Foundation</span>
+        <Link href="/student/dashboard" className="flex items-center text-decoration-none mr-8">
+          <Logo size={44} />
         </Link>
 
         {/* Desktop nav */}

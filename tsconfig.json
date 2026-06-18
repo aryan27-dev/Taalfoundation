@@ -19,5 +19,5 @@
     "target": "ES2017"
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "src", "frontend", "vite.config.ts", "tsconfig.app.json", "tsconfig.node.json", "dist"]
+  "exclude": ["node_modules", "dist"]
 }

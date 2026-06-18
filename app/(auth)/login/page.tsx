@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -46,12 +47,9 @@ export default function LoginPage() {
         boxShadow: '0 32px 64px rgba(0,0,0,0.4)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '56px', height: '56px', background: 'linear-gradient(45deg,#f97316,#fbbf24)',
-            borderRadius: '16px', margin: '0 auto 1rem', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '1.5rem',
-          }}>🎭</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Taal Foundation</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <Logo size={96} priority />
+          </div>
           <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '4px' }}>Student & Admin Portal</p>
         </div>
 

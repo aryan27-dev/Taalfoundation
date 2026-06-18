@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: 'Taal Foundation — Kathak Dance Academy',
   description: 'Nurturing Kathak performers through classical training, mindful practice, and heritage-driven showcases.',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/icon-192.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

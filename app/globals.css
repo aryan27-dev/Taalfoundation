@@ -67,10 +67,8 @@ input, select, textarea {
 }
 
 .brand {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
 }
 
 .nav-links {
@@ -367,6 +365,7 @@ input, select, textarea {
 
 .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
 .footer a { color: #fbbf24; }
+.footer img { margin-bottom: 0.75rem; }
 
 @media (max-width: 900px) {
   .nav { flex-direction: column; align-items: flex-start; }
