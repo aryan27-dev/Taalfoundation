@@ -24,3 +24,29 @@ export async function POST(req: Request) {
   })
   return NextResponse.json(item, { status: 201 })
 }
+
+export async function PATCH(req: Request) {
+  if (!await requireAdmin()) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const { id, ...data } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  const item = await prisma.uniformItem.update({
+    where: { id },
+    data: {
+      ...(data.name && { name: data.name }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.price !== undefined && { price: Number(data.price) }),
+      ...(data.sizes && { sizes: data.sizes }),
+      ...(data.category && { category: data.category }),
+      ...(data.stock !== undefined && { stock: Number(data.stock) }),
+      ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+    },
+  })
+  return NextResponse.json(item)
+}
+
+export async function DELETE(req: Request) {
+  if (!await requireAdmin()) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const { id } = await req.json()
+  await prisma.uniformItem.update({ where: { id }, data: { isAvailable: false } })
+  return NextResponse.json({ success: true })
+}

@@ -8,7 +8,7 @@ export default async function AdminDashboardPage() {
 
   const currentMonth = format(new Date(), 'yyyy-MM')
 
-  const [totalStudents, pendingFees, collectedThisMonth, overdueCount, recentStudents, upcomingEvents] = await Promise.all([
+  const [totalStudents, pendingFees, collectedThisMonth, overdueCount, recentStudents, upcomingEvents, recentPayments] = await Promise.all([
     prisma.user.count({ where: { role: 'STUDENT', isActive: true } }),
     prisma.fee.aggregate({ where: { status: 'PENDING' }, _sum: { amount: true }, _count: true }),
     prisma.fee.aggregate({ where: { status: 'PAID', month: currentMonth }, _sum: { amount: true } }),
@@ -23,6 +23,12 @@ export default async function AdminDashboardPage() {
       where: { eventDate: { gte: new Date() } },
       orderBy: { eventDate: 'asc' },
       take: 3,
+    }),
+    prisma.fee.findMany({
+      where: { status: 'PAID' },
+      include: { student: { select: { id: true, name: true, email: true } } },
+      orderBy: { paidDate: 'desc' },
+      take: 10,
     }),
   ])
 
@@ -48,6 +54,7 @@ export default async function AdminDashboardPage() {
       monthlyData={monthlyData}
       recentStudents={JSON.parse(JSON.stringify(recentStudents))}
       upcomingEvents={JSON.parse(JSON.stringify(upcomingEvents))}
+      recentPayments={JSON.parse(JSON.stringify(recentPayments))}
       adminName={session!.user.name}
     />
   )

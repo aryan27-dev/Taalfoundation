@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Mail, Zap, CheckCircle2, Clock, AlertTriangle, FileX, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Mail, Zap, CheckCircle2, Clock, AlertTriangle, FileX, X, Download, Banknote } from 'lucide-react'
 
 interface Fee {
   id: string
@@ -14,14 +15,23 @@ interface Fee {
   feeType: string
   month?: string
   waivedReason?: string
+  razorpayPaymentId?: string
+  notes?: string
   student: { id: string; name: string; email: string; batch?: { name: string } | null }
 }
 
-const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
+const statusColors: Record<string, { bg: string; text: string; icon: typeof CheckCircle2 }> = {
   PAID: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2 },
   PENDING: { bg: 'bg-orange-100', text: 'text-orange-700', icon: Clock },
   OVERDUE: { bg: 'bg-rose-100', text: 'text-rose-700', icon: AlertTriangle },
   WAIVED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: FileX },
+}
+
+function paymentMethod(f: Fee) {
+  if (f.status !== 'PAID') return null
+  if (f.razorpayPaymentId) return 'Online'
+  if (f.notes?.includes('offline')) return 'Cash/UPI'
+  return 'Offline'
 }
 
 export default function FeesClient({ fees: initial, summary, collectedThisMonth }: {
@@ -29,14 +39,21 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
   summary: { status: string; _sum: { amount: number | null }; _count: number }[]
   collectedThisMonth: number
 }) {
+  const router = useRouter()
   const [fees, setFees] = useState(initial)
   const [tab, setTab] = useState<'ALL' | 'PENDING' | 'PAID' | 'OVERDUE' | 'WAIVED'>('ALL')
   const [loading, setLoading] = useState(false)
   const [waiveId, setWaiveId] = useState<string | null>(null)
   const [waiveReason, setWaiveReason] = useState('')
+  const [markPaidId, setMarkPaidId] = useState<string | null>(null)
+  const [paymentNote, setPaymentNote] = useState('')
+
+  useEffect(() => {
+    const interval = setInterval(() => router.refresh(), 30000)
+    return () => clearInterval(interval)
+  }, [router])
 
   const filtered = tab === 'ALL' ? fees : fees.filter((f) => f.status === tab)
-
   const getStat = (s: string) => summary.find((x) => x.status === s)
 
   async function generate() {
@@ -45,12 +62,12 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
     const res = await fetch('/api/admin/fees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'generate' }) })
     setLoading(false)
     const d = await res.json()
-    if (res.ok) { toast.success(`${d.created} fee records created`); window.location.reload() }
+    if (res.ok) { toast.success(`${d.created} fee records created`); router.refresh() }
     else toast.error('Failed to generate fees')
   }
 
   async function remind() {
-    if (!confirm('Send reminder emails to all students with pending/overdue fees?')) return
+    if (!confirm('Send reminder emails and WhatsApp to all students with pending/overdue fees?')) return
     setLoading(true)
     const res = await fetch('/api/admin/fees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remind' }) })
     setLoading(false)
@@ -71,7 +88,25 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
       toast.success('Fee waived')
       setWaiveId(null)
       setWaiveReason('')
+      router.refresh()
     } else toast.error('Failed to waive fee')
+  }
+
+  async function markPaid() {
+    if (!markPaidId) return
+    const res = await fetch('/api/admin/fees', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'markPaid', feeId: markPaidId, paymentNote }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setFees((prev) => prev.map((f) => f.id === markPaidId ? { ...f, ...updated, status: 'PAID' } : f))
+      toast.success('Marked as paid')
+      setMarkPaidId(null)
+      setPaymentNote('')
+      router.refresh()
+    } else toast.error('Failed to mark as paid')
   }
 
   return (
@@ -82,37 +117,25 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
           <p className="text-slate-500 mt-2 m-0 text-base">Collected this month: <strong className="text-[#10b981]">{formatCurrency(collectedThisMonth)}</strong></p>
         </div>
         <div className="flex gap-3 flex-wrap">
-          <button 
-            onClick={remind} 
-            disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50"
-          >
+          <button type="button" onClick={() => { window.location.href = '/api/admin/export/fees' }} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors cursor-pointer shadow-sm">
+            <Download size={16} /> Export Excel
+          </button>
+          <button onClick={remind} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50">
             <Mail size={16} /> Send Reminders
           </button>
-          <button 
-            onClick={generate} 
-            disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50 border-none"
-          >
+          <button onClick={generate} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50 border-none">
             <Zap size={16} /> Generate This Month&apos;s Fees
           </button>
         </div>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {['PENDING', 'PAID', 'OVERDUE', 'WAIVED'].map((s) => {
           const stat = getStat(s)
           const { bg, text, icon: Icon } = statusColors[s]
           const isSelected = tab === s
           return (
-            <button 
-              key={s} 
-              onClick={() => setTab(s as typeof tab)} 
-              className={`text-left p-5 rounded-2xl transition-all cursor-pointer border-2 ${
-                isSelected ? `border-blue-500 ${bg}` : 'border-slate-200 bg-white hover:border-blue-300'
-              }`}
-            >
+            <button key={s} onClick={() => setTab(s as typeof tab)} className={`text-left p-5 rounded-2xl transition-all cursor-pointer border-2 ${isSelected ? `border-blue-500 ${bg}` : 'border-slate-200 bg-white hover:border-blue-300'}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Icon size={16} className={isSelected ? 'text-blue-700' : 'text-slate-400'} />
                 <p className="m-0 text-xs font-bold text-slate-500 uppercase tracking-wider">{s}</p>
@@ -124,28 +147,20 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
         })}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
         {(['ALL', 'PENDING', 'PAID', 'OVERDUE', 'WAIVED'] as const).map((t) => (
-          <button 
-            key={t} 
-            onClick={() => setTab(t)} 
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors decoration-none border-none cursor-pointer whitespace-nowrap ${
-              tab === t ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
+          <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors border-none cursor-pointer whitespace-nowrap ${tab === t ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
             {t === 'ALL' ? 'All Fees' : t}
           </button>
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                {['Student', 'Month', 'Amount', 'Due Date', 'Status', 'Actions'].map((h) => (
+                {['Student', 'Month', 'Amount', 'Due Date', 'Status', 'Payment', 'Actions'].map((h) => (
                   <th key={h} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -153,6 +168,7 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
             <tbody className="divide-y divide-slate-100">
               {filtered.map((f) => {
                 const { bg, text, icon: Icon } = statusColors[f.status] || { bg: 'bg-slate-100', text: 'text-slate-700', icon: CheckCircle2 }
+                const method = paymentMethod(f)
                 return (
                   <tr key={f.id} className="hover:bg-slate-50 transition-colors bg-white">
                     <td className="px-6 py-4">
@@ -167,17 +183,29 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
                         <Icon size={14} /> {f.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-xs text-slate-500">
+                      {method ? (
+                        <div>
+                          <span className={`font-bold ${method === 'Online' ? 'text-green-700' : 'text-blue-700'}`}>{method}</span>
+                          {f.paidDate && <p className="m-0 mt-0.5">{formatDate(f.paidDate)}</p>}
+                          {(f.razorpayPaymentId || f.notes) && <p className="m-0 mt-0.5 font-mono text-[10px]">{f.razorpayPaymentId || f.notes}</p>}
+                        </div>
+                      ) : '—'}
+                    </td>
                     <td className="px-6 py-4">
-                      {f.status === 'PENDING' || f.status === 'OVERDUE' ? (
-                        <button 
-                          className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer"
-                          onClick={() => { setWaiveId(f.id); setWaiveReason('') }}
-                        >
-                          Waive
-                        </button>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
+                      <div className="flex gap-2">
+                        {(f.status === 'PENDING' || f.status === 'OVERDUE') && (
+                          <>
+                            <button className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-green-300 hover:bg-green-50 text-slate-600 hover:text-green-700 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1" onClick={() => { setMarkPaidId(f.id); setPaymentNote('') }}>
+                              <Banknote size={14} /> Mark Paid
+                            </button>
+                            <button className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer" onClick={() => { setWaiveId(f.id); setWaiveReason('') }}>
+                              Waive
+                            </button>
+                          </>
+                        )}
+                        {f.status !== 'PENDING' && f.status !== 'OVERDUE' && <span className="text-slate-300">—</span>}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -186,48 +214,43 @@ export default function FeesClient({ fees: initial, summary, collectedThisMonth 
           </table>
           {filtered.length === 0 && (
             <div className="p-12 text-center text-slate-500 font-medium flex flex-col items-center">
-              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
-                <FileX size={32} />
-              </div>
+              <FileX size={32} className="text-slate-300 mb-4" />
               No fees found for this category.
             </div>
           )}
         </div>
       </div>
 
-      {/* Waive modal */}
       {waiveId && (
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200">
             <div className="flex justify-between items-center mb-5">
               <h3 className="m-0 text-xl font-bold text-slate-900">Waive Fee</h3>
-              <button onClick={() => setWaiveId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
-                <X size={20} />
-              </button>
+              <button onClick={() => setWaiveId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"><X size={20} /></button>
             </div>
-            
             <label className="block font-semibold text-sm mb-1.5 text-slate-700">Reason for waiver <span className="text-rose-500">*</span></label>
-            <textarea
-              value={waiveReason}
-              onChange={(e) => setWaiveReason(e.target.value)}
-              rows={3}
-              placeholder="e.g. Financial hardship, scholarship, etc."
-              className="w-full p-3 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all box-border resize-y text-slate-900 font-medium"
-            />
-            
+            <textarea value={waiveReason} onChange={(e) => setWaiveReason(e.target.value)} rows={3} placeholder="e.g. Financial hardship, scholarship" className="w-full p-3 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 box-border resize-y text-slate-900" />
             <div className="flex gap-3 justify-end mt-6">
-              <button 
-                onClick={() => setWaiveId(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={waive}
-                className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer"
-              >
-                Waive Fee
-              </button>
+              <button onClick={() => setWaiveId(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+              <button onClick={waive} className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm border-none cursor-pointer">Waive Fee</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {markPaidId && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="m-0 text-xl font-bold text-slate-900">Mark as Paid (Cash/UPI)</h3>
+              <button onClick={() => setMarkPaidId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            <label className="block font-semibold text-sm mb-1.5 text-slate-700">Reference note (optional)</label>
+            <input value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="e.g. UPI ref, receipt #123" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-blue-500 box-border text-slate-900" />
+            <p className="text-xs text-slate-500 mt-2">Confirmation email and WhatsApp will be sent to the student.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => setMarkPaidId(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+              <button onClick={markPaid} className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm border-none cursor-pointer">Confirm Payment</button>
             </div>
           </div>
         </div>

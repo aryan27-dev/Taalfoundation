@@ -11,6 +11,13 @@ async function requireAdmin() {
 export async function PATCH(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { orderId, status } = await req.json()
+
+  const existing = await prisma.uniformOrder.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  })
+  if (!existing) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+
   const order = await prisma.uniformOrder.update({
     where: { id: orderId },
     data: {
@@ -18,5 +25,24 @@ export async function PATCH(req: Request) {
       ...(status === 'DELIVERED' && { deliveredAt: new Date() }),
     },
   })
+
+  if (status === 'CONFIRMED' && existing.status === 'PENDING') {
+    for (const item of existing.items) {
+      await prisma.uniformItem.update({
+        where: { id: item.itemId },
+        data: { stock: { decrement: item.quantity } },
+      })
+    }
+  }
+
+  if (status === 'CANCELLED' && existing.status === 'CONFIRMED') {
+    for (const item of existing.items) {
+      await prisma.uniformItem.update({
+        where: { id: item.itemId },
+        data: { stock: { increment: item.quantity } },
+      })
+    }
+  }
+
   return NextResponse.json(order)
 }

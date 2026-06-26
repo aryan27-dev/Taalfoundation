@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Plus, X, PackageOpen, Shirt, ArrowRight, Tag, Boxes, AlertCircle } from 'lucide-react'
+import { Plus, X, PackageOpen, Shirt, ArrowRight, Tag, Boxes, AlertCircle, Pencil, Ban } from 'lucide-react'
 
 interface UniformItem {
   id: string; name: string; description?: string; price: number; sizes: string[]
@@ -35,6 +35,7 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
   const [orders, setOrders] = useState(initialOrders)
   const [items, setItems] = useState(initialItems)
   const [showAddItem, setShowAddItem] = useState(false)
+  const [editItem, setEditItem] = useState<UniformItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [itemForm, setItemForm] = useState({ name: '', description: '', price: '', category: 'UNIFORM', sizes: 'XS,S,M,L,XL,XXL', stock: '' })
 
@@ -50,23 +51,37 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
     } else toast.error('Failed to update')
   }
 
-  async function addItem(e: React.FormEvent) {
+  function openEditItem(item: UniformItem) {
+    setItemForm({ name: item.name, description: item.description || '', price: String(item.price), category: item.category, sizes: item.sizes.join(','), stock: String(item.stock) })
+    setEditItem(item)
+  }
+
+  async function saveItem(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    const payload = { ...itemForm, price: Number(itemForm.price), stock: Number(itemForm.stock), sizes: itemForm.sizes.split(',').map((s) => s.trim()) }
     const res = await fetch('/api/admin/uniforms/catalog', {
-      method: 'POST',
+      method: editItem ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...itemForm, price: Number(itemForm.price), stock: Number(itemForm.stock), sizes: itemForm.sizes.split(',').map((s) => s.trim()) }),
+      body: JSON.stringify(editItem ? { id: editItem.id, ...payload } : payload),
     })
     setLoading(false)
     if (res.ok) {
       const item = await res.json()
-      setItems((prev) => [...prev, item])
-      setShowAddItem(false)
-      setItemForm({ name: '', description: '', price: '', category: 'UNIFORM', sizes: 'XS,S,M,L,XL,XXL', stock: '' })
-      toast.success('Item added to catalog!')
-    } else toast.error('Failed to add item')
+      if (editItem) {
+        setItems((prev) => prev.map((i) => i.id === item.id ? item : i))
+        setEditItem(null)
+        toast.success('Item updated')
+      } else {
+        setItems((prev) => [...prev, item])
+        setShowAddItem(false)
+        setItemForm({ name: '', description: '', price: '', category: 'UNIFORM', sizes: 'XS,S,M,L,XL,XXL', stock: '' })
+        toast.success('Item added to catalog!')
+      }
+    } else toast.error('Failed to save item')
   }
+
+  const catalogModalOpen = showAddItem || !!editItem
 
   return (
     <div className="font-inter space-y-6 max-w-5xl mx-auto p-4 md:p-8">
@@ -129,6 +144,11 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
                         {nextStatus} <ArrowRight size={14} />
                       </button>
                     )}
+                    {order.status === 'PENDING' && (
+                      <button onClick={() => updateOrderStatus(order.id, 'CANCELLED')} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-semibold text-xs cursor-pointer">
+                        <Ban size={14} /> Cancel
+                      </button>
+                    )}
                   </div>
                 </div>
                 
@@ -170,17 +190,17 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
 
       {tab === 'catalog' && (
         <>
-          {showAddItem && (
+          {catalogModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
               <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200 my-auto">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="m-0 text-xl font-bold text-slate-900">Add Catalog Item</h2>
-                  <button onClick={() => setShowAddItem(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
+                  <h2 className="m-0 text-xl font-bold text-slate-900">{editItem ? 'Edit Item' : 'Add Catalog Item'}</h2>
+                  <button onClick={() => { setShowAddItem(false); setEditItem(null) }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
                     <X size={20} />
                   </button>
                 </div>
                 
-                <form onSubmit={addItem} className="flex flex-col gap-4">
+                <form onSubmit={saveItem} className="flex flex-col gap-4">
                   {[
                     { label: 'Item Name *', key: 'name', placeholder: 'e.g. Practice Costume' },
                     { label: 'Price (₹) *', key: 'price', placeholder: 'e.g. 1200' },
@@ -213,7 +233,7 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
                   <div className="flex gap-3 justify-end mt-4">
                     <button 
                       type="button" 
-                      onClick={() => setShowAddItem(false)}
+                      onClick={() => { setShowAddItem(false); setEditItem(null) }}
                       className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
                     >
                       Cancel
@@ -223,7 +243,7 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
                       disabled={loading}
                       className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer disabled:opacity-50"
                     >
-                      {loading ? 'Adding…' : 'Add Item'}
+                      {loading ? 'Saving…' : editItem ? 'Save' : 'Add Item'}
                     </button>
                   </div>
                 </form>
@@ -251,7 +271,10 @@ export default function UniformsAdminClient({ items: initialItems, orders: initi
                 </div>
                 
                 <h3 className="m-0 text-lg font-bold text-slate-900 mb-2">{item.name}</h3>
-                <p className="m-0 text-2xl font-bold text-slate-900 mb-6">{formatCurrency(item.price)}</p>
+                <p className="m-0 text-2xl font-bold text-slate-900 mb-4">{formatCurrency(item.price)}</p>
+                <button onClick={() => openEditItem(item)} className="mb-4 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer flex items-center gap-1.5 w-fit">
+                  <Pencil size={14} /> Edit
+                </button>
                 
                 <div className="mt-auto pt-4 border-t border-slate-100">
                   <p className="m-0 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Available Sizes</p>

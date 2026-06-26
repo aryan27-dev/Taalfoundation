@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
-import { CalendarPlus, CalendarDays, Trash2, X, RefreshCw, Clock } from 'lucide-react'
+import { CalendarPlus, CalendarDays, Trash2, X, RefreshCw, Clock, Pencil } from 'lucide-react'
 
 interface Schedule {
   id: string
@@ -25,6 +25,7 @@ const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-s
 export default function ScheduleClient({ schedules: initial, batches }: { schedules: Schedule[]; batches: Batch[] }) {
   const [schedules, setSchedules] = useState(initial)
   const [showAdd, setShowAdd] = useState(false)
+  const [editSchedule, setEditSchedule] = useState<Schedule | null>(null)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     title: '', description: '', startTime: '', endTime: '',
@@ -67,6 +68,37 @@ export default function ScheduleClient({ schedules: initial, batches }: { schedu
     else toast.error('Failed to delete')
   }
 
+  function openEdit(s: Schedule) {
+    setForm({
+      title: s.title,
+      description: s.description || '',
+      startTime: s.startTime.slice(0, 16),
+      endTime: s.endTime.slice(0, 16),
+      batchId: s.batchId || '',
+      isRecurring: s.isRecurring,
+      recurrence: s.recurrence || '',
+    })
+    setSelectedDays(s.recurrence ? s.recurrence.split(',') : [])
+    setEditSchedule(s)
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editSchedule) return
+    setLoading(true)
+    const data = { title: form.title, startTime: form.startTime, endTime: form.endTime, batchId: form.batchId || null, isRecurring: form.isRecurring, recurrence: form.isRecurring ? selectedDays.join(',') : null }
+    const res = await fetch('/api/admin/schedule', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editSchedule.id, ...data }) })
+    setLoading(false)
+    if (res.ok) {
+      const updated = await res.json()
+      setSchedules((prev) => prev.map((s) => s.id === editSchedule.id ? updated : s).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()))
+      setEditSchedule(null)
+      toast.success('Schedule updated')
+    } else toast.error('Failed to update')
+  }
+
+  const modalOpen = showAdd || !!editSchedule
+
   return (
     <div className="font-inter space-y-6 max-w-4xl mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-2 flex-wrap gap-4">
@@ -82,17 +114,17 @@ export default function ScheduleClient({ schedules: initial, batches }: { schedu
         </button>
       </div>
 
-      {showAdd && (
+      {modalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200 my-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="m-0 text-xl font-bold text-slate-900">Add Class Slot</h2>
-              <button onClick={() => setShowAdd(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
+              <h2 className="m-0 text-xl font-bold text-slate-900">{editSchedule ? 'Edit Class' : 'Add Class Slot'}</h2>
+              <button onClick={() => { setShowAdd(false); setEditSchedule(null) }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer transition-colors">
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={add} className="flex flex-col gap-4">
+            <form onSubmit={editSchedule ? saveEdit : add} className="flex flex-col gap-4">
               <div>
                 <label className="block font-semibold text-sm mb-1.5 text-slate-700">Class Title <span className="text-rose-500">*</span></label>
                 <input 
@@ -180,7 +212,7 @@ export default function ScheduleClient({ schedules: initial, batches }: { schedu
               <div className="flex gap-3 justify-end mt-4">
                 <button 
                   type="button" 
-                  onClick={() => setShowAdd(false)}
+                  onClick={() => { setShowAdd(false); setEditSchedule(null) }}
                   className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors border-none cursor-pointer"
                 >
                   Cancel
@@ -190,7 +222,7 @@ export default function ScheduleClient({ schedules: initial, batches }: { schedu
                   disabled={loading}
                   className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors border-none shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  {loading ? 'Adding…' : 'Add Class'}
+                  {loading ? 'Saving…' : editSchedule ? 'Save Changes' : 'Add Class'}
                 </button>
               </div>
             </form>
@@ -217,13 +249,18 @@ export default function ScheduleClient({ schedules: initial, batches }: { schedu
                 </p>
               </div>
             </div>
-            <button 
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => openEdit(s)} className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer flex items-center gap-1.5">
+                <Pencil size={16} /> Edit
+              </button>
+              <button 
               onClick={() => remove(s.id)}
-              className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+              className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
               title="Delete Schedule"
             >
               <Trash2 size={16} /> <span className="md:hidden">Remove</span>
             </button>
+            </div>
           </div>
         ))}
         

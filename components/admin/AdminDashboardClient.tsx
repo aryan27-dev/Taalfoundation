@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Users, TrendingUp, Clock, AlertTriangle, ChevronRight, CalendarDays } from 'lucide-react'
+import { Users, TrendingUp, Clock, AlertTriangle, ChevronRight, CalendarDays, IndianRupee } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   stats: {
@@ -22,10 +24,31 @@ interface Props {
     fees: { amount: number; dueDate: string }[]
   }[]
   upcomingEvents: { id: string; title: string; eventDate: string; feeAmount: number }[]
+  recentPayments: {
+    id: string
+    amount: number
+    paidDate: string | null
+    razorpayPaymentId: string | null
+    notes: string | null
+    month: string | null
+    student: { id: string; name: string; email: string }
+  }[]
   adminName: string
 }
 
-export default function AdminDashboardClient({ stats, monthlyData, recentStudents, upcomingEvents, adminName }: Props) {
+export default function AdminDashboardClient({ stats, monthlyData, recentStudents, upcomingEvents, recentPayments, adminName }: Props) {
+  const router = useRouter()
+
+  useEffect(() => {
+    const interval = setInterval(() => router.refresh(), 30000)
+    return () => clearInterval(interval)
+  }, [router])
+
+  function paymentMethod(fee: Props['recentPayments'][0]) {
+    if (fee.razorpayPaymentId) return 'Online'
+    if (fee.notes?.includes('offline')) return 'Cash/UPI'
+    return 'Offline'
+  }
   return (
     <div className="font-inter space-y-8 max-w-7xl mx-auto p-4 md:p-8">
       {/* Header */}
@@ -110,6 +133,52 @@ export default function AdminDashboardClient({ stats, monthlyData, recentStudent
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent payments */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+          <h2 className="text-lg font-bold text-slate-900 m-0 flex items-center gap-2">
+            <IndianRupee size={20} className="text-[#10b981]" /> Recent Payments
+          </h2>
+          <Link href="/admin/fees" className="text-sm font-semibold text-blue-600 hover:text-blue-700 decoration-none flex items-center">
+            View all <ChevronRight size={16} />
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
+            <thead>
+              <tr className="bg-white border-b border-slate-200">
+                {['Student', 'Amount', 'Month', 'Paid On', 'Method', 'Reference'].map((h) => (
+                  <th key={h} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {recentPayments.map((f) => (
+                <tr key={f.id} className="hover:bg-slate-50 transition-colors bg-white">
+                  <td className="px-6 py-4 font-bold text-slate-900">{f.student.name}</td>
+                  <td className="px-6 py-4 font-bold text-[#10b981]">{formatCurrency(f.amount)}</td>
+                  <td className="px-6 py-4 text-slate-600">{f.month || '—'}</td>
+                  <td className="px-6 py-4 text-slate-600">{f.paidDate ? formatDate(f.paidDate) : '—'}</td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                      paymentMethod(f) === 'Online' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {paymentMethod(f)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-slate-500 font-mono">
+                    {f.razorpayPaymentId || f.notes || '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {recentPayments.length === 0 && (
+            <div className="p-8 text-center text-slate-500 font-medium">No payments recorded yet.</div>
           )}
         </div>
       </div>

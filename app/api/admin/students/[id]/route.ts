@@ -44,6 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       parentPhone: body.parentPhone,
       address: body.address,
       isActive: body.isActive,
+      ...(body.dateOfBirth && { dateOfBirth: new Date(body.dateOfBirth) }),
       ...(body.feeAmount && {
         feeStructure: {
           update: { currentAmount: Number(body.feeAmount) },

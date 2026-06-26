@@ -9,7 +9,6 @@ export default async function AdminFeesPage() {
     prisma.fee.findMany({
       include: { student: { select: { id: true, name: true, email: true, batch: true } } },
       orderBy: { createdAt: 'desc' },
-      take: 200,
     }),
     prisma.fee.groupBy({
       by: ['status'],

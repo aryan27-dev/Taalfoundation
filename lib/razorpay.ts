@@ -18,3 +18,11 @@ export function verifyRazorpaySignature(
     .digest('hex')
   return expectedSignature === signature
 }
+
+export function verifyRazorpayWebhookSignature(body: string, signature: string): boolean {
+  const expected = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+    .update(body)
+    .digest('hex')
+  return expected === signature
+}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatDate } from '@/lib/utils'
-import { Megaphone, Plus, X, Globe, Users, Trash2, PowerOff, Power } from 'lucide-react'
+import { Megaphone, Plus, X, Globe, Users, Trash2, PowerOff, Power, Pencil } from 'lucide-react'
 
 interface Announcement {
   id: string
@@ -21,6 +21,7 @@ const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-s
 export default function AnnouncementsClient({ announcements: initial, batches }: { announcements: Announcement[]; batches: Batch[] }) {
   const [announcements, setAnnouncements] = useState(initial)
   const [showAdd, setShowAdd] = useState(false)
+  const [editAnn, setEditAnn] = useState<Announcement | null>(null)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ title: '', content: '', targetBatch: '', isPublished: true })
 
@@ -59,6 +60,34 @@ export default function AnnouncementsClient({ announcements: initial, batches }:
       setAnnouncements((prev) => prev.map((a) => a.id === ann.id ? { ...a, isPublished: !a.isPublished } : a))
       toast.success(ann.isPublished ? 'Unpublished' : 'Published')
     }
+  }
+
+  function openEdit(ann: Announcement) {
+    setForm({ title: ann.title, content: ann.content, targetBatch: ann.targetBatch || '', isPublished: ann.isPublished })
+    setEditAnn(ann)
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editAnn) return
+    setLoading(true)
+    const res = await fetch('/api/admin/announcements', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editAnn.id, title: form.title, content: form.content, targetBatch: form.targetBatch || null }),
+    })
+    setLoading(false)
+    if (res.ok) {
+      const updated = await res.json()
+      setAnnouncements((prev) => prev.map((a) => a.id === editAnn.id ? { ...a, ...updated } : a))
+      setEditAnn(null)
+      toast.success('Announcement updated')
+    } else toast.error('Failed to update')
+  }
+
+  function batchName(id: string | null | undefined) {
+    if (!id) return null
+    return batches.find((b) => b.id === id)?.name || 'Batch'
   }
 
   return (
@@ -156,6 +185,29 @@ export default function AnnouncementsClient({ announcements: initial, batches }:
         </div>
       )}
 
+      {editAnn && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="m-0 text-xl font-bold text-slate-900">Edit Announcement</h2>
+              <button onClick={() => setEditAnn(null)} className="border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            <form onSubmit={saveEdit} className="flex flex-col gap-4">
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className={inputClass} placeholder="Title" />
+              <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required rows={5} className="w-full p-3 rounded-xl border border-slate-200 text-sm bg-slate-50 box-border" />
+              <select value={form.targetBatch} onChange={(e) => setForm({ ...form, targetBatch: e.target.value })} className={inputClass}>
+                <option value="">All Students</option>
+                {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setEditAnn(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+                <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm border-none cursor-pointer">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4">
         {announcements.map((ann) => (
           <div key={ann.id} className={`bg-white rounded-2xl p-6 border shadow-sm transition-all ${ann.isPublished ? 'border-slate-200' : 'border-amber-200 bg-amber-50/30'}`}>
@@ -171,7 +223,7 @@ export default function AnnouncementsClient({ announcements: initial, batches }:
                   
                   {ann.targetBatch ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
-                      <Users size={12} /> Batch Only
+                      <Users size={12} /> {batchName(ann.targetBatch)}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
@@ -182,6 +234,9 @@ export default function AnnouncementsClient({ announcements: initial, batches }:
                 <p className="m-0 text-xs font-semibold text-slate-500 uppercase tracking-wider">{formatDate(ann.createdAt)}</p>
               </div>
               <div className="flex gap-2 shrink-0">
+                <button onClick={() => openEdit(ann)} className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-xs cursor-pointer flex items-center gap-1.5">
+                  <Pencil size={14} /> Edit
+                </button>
                 <button 
                   onClick={() => togglePublish(ann)}
                   className={`px-3 py-1.5 rounded-lg border font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${

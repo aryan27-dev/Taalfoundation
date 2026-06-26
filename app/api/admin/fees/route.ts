@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendMail, feeReminderEmail } from '@/lib/mailer'
 import { sendWhatsApp, feeReminderMessage } from '@/lib/whatsapp'
+import { completeFeePayment } from '@/lib/payments'
 import { format, endOfMonth } from 'date-fns'
 
 async function requireAdmin() {
@@ -34,9 +35,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  const { action, feeId, waivedReason } = await req.json()
+  const body = await req.json()
+  const { action, feeId, waivedReason, paymentNote, studentId, amount, feeType, dueDate, month } = body
 
-  // Waive a fee
   if (action === 'waive') {
     if (!feeId) return NextResponse.json({ error: 'feeId required' }, { status: 400 })
     const fee = await prisma.fee.update({
@@ -46,9 +47,34 @@ export async function POST(req: Request) {
     return NextResponse.json(fee)
   }
 
-  // Generate monthly fees manually
+  if (action === 'markPaid') {
+    if (!feeId) return NextResponse.json({ error: 'feeId required' }, { status: 400 })
+    const result = await completeFeePayment({
+      feeId,
+      paymentNote: paymentNote ? `Cash/UPI offline: ${paymentNote}` : 'Cash/UPI offline',
+    })
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: 404 })
+    return NextResponse.json(result.fee)
+  }
+
+  if (action === 'createOneOff') {
+    if (!studentId || !amount) return NextResponse.json({ error: 'studentId and amount required' }, { status: 400 })
+    const fee = await prisma.fee.create({
+      data: {
+        studentId,
+        amount: Number(amount),
+        dueDate: dueDate ? new Date(dueDate) : endOfMonth(new Date()),
+        feeType: feeType || 'OTHER',
+        month: month || null,
+        status: 'PENDING',
+      },
+      include: { student: { select: { id: true, name: true, email: true, batch: true } } },
+    })
+    return NextResponse.json(fee, { status: 201 })
+  }
+
   if (action === 'generate') {
-    const month = format(new Date(), 'yyyy-MM')
+    const monthStr = format(new Date(), 'yyyy-MM')
     const due = endOfMonth(new Date())
 
     const students = await prisma.user.findMany({
@@ -59,7 +85,7 @@ export async function POST(req: Request) {
     const created: string[] = []
     for (const student of students) {
       if (!student.feeStructure) continue
-      const existing = await prisma.fee.findFirst({ where: { studentId: student.id, month } })
+      const existing = await prisma.fee.findFirst({ where: { studentId: student.id, month: monthStr } })
       if (!existing) {
         await prisma.fee.create({
           data: {
@@ -67,7 +93,7 @@ export async function POST(req: Request) {
             amount: student.feeStructure.currentAmount,
             dueDate: due,
             feeType: 'MONTHLY',
-            month,
+            month: monthStr,
             status: 'PENDING',
           },
         })
@@ -77,7 +103,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ created: created.length })
   }
 
-  // Send bulk reminders
   if (action === 'remind') {
     const overdue = await prisma.fee.findMany({
       where: { status: { in: ['PENDING', 'OVERDUE'] } },
@@ -88,15 +113,13 @@ export async function POST(req: Request) {
     for (const fee of overdue) {
       try {
         const dueDateStr = new Date(fee.dueDate).toLocaleDateString('en-IN')
-        const month = fee.month || 'this month'
+        const monthLabel = fee.month || 'this month'
 
-        // Email
-        const { subject, html } = feeReminderEmail(fee.student.name, fee.amount, dueDateStr, month)
+        const { subject, html } = feeReminderEmail(fee.student.name, fee.amount, dueDateStr, monthLabel)
         await sendMail({ to: fee.student.email, subject, html })
 
-        // WhatsApp (if phone on file)
         if (fee.student.phone) {
-          await sendWhatsApp(fee.student.phone, feeReminderMessage(fee.student.name, fee.amount, dueDateStr, month))
+          await sendWhatsApp(fee.student.phone, feeReminderMessage(fee.student.name, fee.amount, dueDateStr, monthLabel))
         }
 
         sent++

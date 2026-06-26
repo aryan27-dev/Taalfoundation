@@ -4,7 +4,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Search, KeyRound, Ban, Eye, X, CheckCircle2, AlertCircle } from 'lucide-react'
+import { UserPlus, Search, KeyRound, Ban, Eye, X, CheckCircle2, AlertCircle, Download, Upload, Pencil } from 'lucide-react'
 
 interface Student {
   id: string
@@ -27,10 +27,18 @@ export default function StudentsClient({ students: initial, batches }: { student
   const [students, setStudents] = useState(initial)
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
+  const [showImport, setShowImport] = useState(false)
+  const [showEdit, setShowEdit] = useState<Student | null>(null)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: { row: number; reason: string }[] } | null>(null)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '', email: '', phone: '', batchId: '', feeAmount: '',
     parentName: '', parentPhone: '', address: '',
+  })
+
+  const [editForm, setEditForm] = useState({
+    name: '', phone: '', batchId: '', feeAmount: '', parentName: '', parentPhone: '', address: '', isActive: true,
   })
 
   const filtered = students.filter(
@@ -75,6 +83,54 @@ export default function StudentsClient({ students: initial, batches }: { student
     else toast.error('Failed to reset password')
   }
 
+  function openEdit(s: Student) {
+    setEditForm({
+      name: s.name,
+      phone: s.phone || '',
+      batchId: s.batch?.id || '',
+      feeAmount: s.feeStructure?.currentAmount?.toString() || '',
+      parentName: '',
+      parentPhone: '',
+      address: '',
+      isActive: s.isActive,
+    })
+    setShowEdit(s)
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!showEdit) return
+    setLoading(true)
+    const res = await fetch(`/api/admin/students/${showEdit.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    })
+    setLoading(false)
+    if (res.ok) {
+      const updated = await res.json()
+      setStudents((prev) => prev.map((s) => s.id === showEdit.id ? { ...s, ...updated } : s))
+      setShowEdit(null)
+      toast.success('Student updated')
+    } else toast.error('Failed to update student')
+  }
+
+  async function importStudents(e: React.FormEvent) {
+    e.preventDefault()
+    if (!importFile) { toast.error('Select a file'); return }
+    setLoading(true)
+    const fd = new FormData()
+    fd.append('file', importFile)
+    const res = await fetch('/api/admin/students/import', { method: 'POST', body: fd })
+    setLoading(false)
+    const data = await res.json()
+    if (res.ok) {
+      setImportResult(data)
+      toast.success(`${data.created} students imported`)
+      if (data.created > 0) window.location.reload()
+    } else toast.error(data.error || 'Import failed')
+  }
+
   return (
     <div className="font-inter space-y-6 max-w-7xl mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-2 flex-wrap gap-4">
@@ -82,12 +138,20 @@ export default function StudentsClient({ students: initial, batches }: { student
           <h1 className="text-3xl font-bold text-slate-900 m-0">Students</h1>
           <p className="text-slate-500 mt-2 m-0 text-base">{students.filter((s) => s.isActive).length} active students</p>
         </div>
-        <button 
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm border-none"
-        >
-          <UserPlus size={18} /> Add Student
-        </button>
+        <div className="flex gap-3 flex-wrap">
+          <button type="button" onClick={() => { window.location.href = '/api/admin/export/students' }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm cursor-pointer shadow-sm">
+            <Download size={16} /> Export
+          </button>
+          <button type="button" onClick={() => { window.location.href = '/api/admin/students/import?template=1' }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm cursor-pointer shadow-sm">
+            <Download size={16} /> Template
+          </button>
+          <button onClick={() => { setShowImport(true); setImportResult(null); setImportFile(null) }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm cursor-pointer shadow-sm border-solid">
+            <Upload size={16} /> Import Excel
+          </button>
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm border-none">
+            <UserPlus size={18} /> Add Student
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -176,6 +240,79 @@ export default function StudentsClient({ students: initial, batches }: { student
         </div>
       )}
 
+      {/* Import modal */}
+      {showImport && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200 my-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="m-0 text-xl font-bold text-slate-900">Import Students from Excel</h2>
+              <button onClick={() => setShowImport(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            <form onSubmit={importStudents} className="flex flex-col gap-4">
+              <p className="m-0 text-sm text-slate-600">Upload an .xlsx file with columns: name, email, phone, parentName, parentPhone, address, batchName, monthlyFee, dateOfBirth</p>
+              <input type="file" accept=".xlsx,.xls" onChange={(e) => setImportFile(e.target.files?.[0] || null)} className="text-sm" required />
+              {importResult && importResult.errors.length > 0 && (
+                <div className="max-h-40 overflow-y-auto bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs">
+                  <p className="m-0 font-bold text-rose-700 mb-2">{importResult.created} created, {importResult.errors.length} errors:</p>
+                  {importResult.errors.map((err, i) => (
+                    <p key={i} className="m-0 text-rose-600">Row {err.row}: {err.reason}</p>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setShowImport(false)} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+                <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm border-none cursor-pointer disabled:opacity-50">{loading ? 'Importing…' : 'Import'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl border border-slate-200 my-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="m-0 text-xl font-bold text-slate-900">Edit Student</h2>
+              <button onClick={() => setShowEdit(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            <form onSubmit={saveEdit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'Full Name', key: 'name' },
+                { label: 'Phone', key: 'phone' },
+                { label: 'Monthly Fee (₹)', key: 'feeAmount', type: 'number' },
+                { label: 'Parent Name', key: 'parentName' },
+                { label: 'Parent Phone', key: 'parentPhone' },
+              ].map(({ label, key, type }) => (
+                <div key={key}>
+                  <label className="block font-semibold text-sm mb-1.5 text-slate-700">{label}</label>
+                  <input type={type || 'text'} value={editForm[key as keyof typeof editForm] as string} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} className={inputClass} />
+                </div>
+              ))}
+              <div className="md:col-span-2">
+                <label className="block font-semibold text-sm mb-1.5 text-slate-700">Address</label>
+                <input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className="block font-semibold text-sm mb-1.5 text-slate-700">Batch</label>
+                <select value={editForm.batchId} onChange={(e) => setEditForm({ ...editForm, batchId: e.target.value })} className={inputClass}>
+                  <option value="">No batch</option>
+                  {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} className="w-4 h-4" />
+                <span className="text-sm font-semibold text-slate-700">Active student</span>
+              </div>
+              <div className="md:col-span-2 flex gap-3 justify-end mt-2">
+                <button type="button" onClick={() => setShowEdit(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+                <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm border-none cursor-pointer disabled:opacity-50">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -223,6 +360,9 @@ export default function StudentsClient({ students: initial, batches }: { student
                         title="View Profile"
                       >
                         <Eye size={14} /> View
+                      </button>
+                      <button onClick={() => openEdit(s)} className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer flex items-center gap-1.5" title="Edit">
+                        <Pencil size={14} /> Edit
                       </button>
                       <button 
                         onClick={() => resetPassword(s.id)}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendMail, annualIncrementEmail } from '@/lib/mailer'
+import { sendWhatsApp, annualIncrementMessage } from '@/lib/whatsapp'
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization')
@@ -14,6 +15,7 @@ export async function GET(req: Request) {
 
   let updated = 0
   for (const s of structures) {
+    const oldAmount = s.currentAmount
     const newAmount = s.currentAmount + 100
     await prisma.studentFeeStructure.update({
       where: { id: s.id },
@@ -33,6 +35,12 @@ export async function GET(req: Request) {
       const { subject, html } = annualIncrementEmail(s.student.name, newAmount)
       await sendMail({ to: s.student.email, subject, html })
     } catch { /* continue */ }
+
+    if (s.student.phone) {
+      try {
+        await sendWhatsApp(s.student.phone, annualIncrementMessage(s.student.name, oldAmount, newAmount))
+      } catch { /* continue */ }
+    }
 
     updated++
   }

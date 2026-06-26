@@ -1,5 +1,10 @@
 import type { NextConfig } from 'next'
 
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -12,7 +17,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000'],
+      allowedOrigins,
     },
   },
 }

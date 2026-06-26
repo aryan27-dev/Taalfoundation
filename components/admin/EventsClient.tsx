@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { CalendarPlus, Trash2, CalendarDays, IndianRupee, Users, FileText, X, Zap } from 'lucide-react'
+import { CalendarPlus, Trash2, CalendarDays, IndianRupee, Users, FileText, X, Zap, Pencil } from 'lucide-react'
+
+interface Registration { student: { id: string; name: string; email: string } }
 
 interface Event {
   id: string
@@ -12,6 +14,7 @@ interface Event {
   eventDate: string
   feeAmount: number
   isOptional: boolean
+  registrations?: Registration[]
   _count: { registrations: number; fees: number }
 }
 
@@ -20,6 +23,8 @@ const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-s
 export default function EventsClient({ events: initial }: { events: Event[] }) {
   const [events, setEvents] = useState(initial)
   const [showAdd, setShowAdd] = useState(false)
+  const [editEvent, setEditEvent] = useState<Event | null>(null)
+  const [viewRegs, setViewRegs] = useState<Event | null>(null)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', eventDate: '', feeAmount: '', isOptional: false })
 
@@ -49,6 +54,35 @@ export default function EventsClient({ events: initial }: { events: Event[] }) {
     const res = await fetch('/api/admin/events', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     if (res.ok) { setEvents((prev) => prev.filter((e) => e.id !== id)); toast.success('Event deleted') }
     else toast.error('Failed to delete event')
+  }
+
+  function openEdit(ev: Event) {
+    setForm({
+      title: ev.title,
+      description: ev.description || '',
+      eventDate: ev.eventDate.split('T')[0],
+      feeAmount: String(ev.feeAmount),
+      isOptional: ev.isOptional,
+    })
+    setEditEvent(ev)
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editEvent) return
+    setLoading(true)
+    const res = await fetch('/api/admin/events', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editEvent.id, title: form.title, description: form.description, eventDate: form.eventDate, feeAmount: Number(form.feeAmount) }),
+    })
+    setLoading(false)
+    if (res.ok) {
+      const updated = await res.json()
+      setEvents((prev) => prev.map((ev) => ev.id === editEvent.id ? { ...ev, ...updated } : ev))
+      setEditEvent(null)
+      toast.success('Event updated')
+    } else toast.error('Failed to update event')
   }
 
   return (
@@ -147,6 +181,62 @@ export default function EventsClient({ events: initial }: { events: Event[] }) {
         </div>
       )}
 
+      {editEvent && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="m-0 text-xl font-bold text-slate-900">Edit Event</h2>
+              <button onClick={() => setEditEvent(null)} className="p-1.5 rounded-lg hover:bg-slate-100 border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            <form onSubmit={saveEdit} className="flex flex-col gap-4">
+              <div>
+                <label className="block font-semibold text-sm mb-1.5">Title</label>
+                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className={inputClass} />
+              </div>
+              <div>
+                <label className="block font-semibold text-sm mb-1.5">Date</label>
+                <input type="date" value={form.eventDate} onChange={(e) => setForm({ ...form, eventDate: e.target.value })} required className={inputClass} />
+              </div>
+              <div>
+                <label className="block font-semibold text-sm mb-1.5">Fee Amount (₹)</label>
+                <input type="number" value={form.feeAmount} onChange={(e) => setForm({ ...form, feeAmount: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className="block font-semibold text-sm mb-1.5">Description</label>
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full p-3 rounded-xl border border-slate-200 text-sm bg-slate-50 box-border" />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setEditEvent(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm border-none cursor-pointer">Cancel</button>
+                <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm border-none cursor-pointer disabled:opacity-50">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {viewRegs && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="m-0 text-lg font-bold">Registrants — {viewRegs.title}</h2>
+              <button onClick={() => setViewRegs(null)} className="border-none bg-transparent cursor-pointer"><X size={20} /></button>
+            </div>
+            {(viewRegs.registrations || []).length === 0 ? (
+              <p className="text-slate-500 text-sm">No registrations yet.</p>
+            ) : (
+              <ul className="m-0 p-0 list-none space-y-2">
+                {viewRegs.registrations!.map((r, i) => (
+                  <li key={i} className="p-3 bg-slate-50 rounded-xl text-sm">
+                    <p className="m-0 font-bold text-slate-900">{r.student.name}</p>
+                    <p className="m-0 text-slate-500">{r.student.email}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4">
         {events.map((ev) => (
           <div key={ev.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex gap-4 items-start justify-between flex-wrap group transition-shadow hover:shadow-md">
@@ -168,7 +258,7 @@ export default function EventsClient({ events: initial }: { events: Event[] }) {
                 <div className="flex items-center gap-2">
                   <IndianRupee size={16} className="text-slate-400" /> {formatCurrency(ev.feeAmount)}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-blue-600" onClick={() => setViewRegs(ev)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setViewRegs(ev)}>
                   <Users size={16} className="text-slate-400" /> {ev._count.registrations} registered
                 </div>
                 <div className="flex items-center gap-2">
@@ -177,13 +267,18 @@ export default function EventsClient({ events: initial }: { events: Event[] }) {
               </div>
             </div>
             
-            <button 
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => openEdit(ev)} className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer flex items-center gap-1.5">
+                <Pencil size={16} /> Edit
+              </button>
+              <button 
               onClick={() => deleteEvent(ev.id)}
-              className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0"
+              className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
               title="Delete Event"
             >
               <Trash2 size={16} /> <span className="md:hidden">Remove</span>
             </button>
+            </div>
           </div>
         ))}
         

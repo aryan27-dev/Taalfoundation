@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
-import { CheckCircle2, Save, Download } from 'lucide-react'
+import { CheckCircle2, Save, Download, FileSpreadsheet } from 'lucide-react'
 
 interface Batch { id: string; name: string }
 interface Student { id: string; name: string; batchId?: string }
@@ -74,6 +74,9 @@ export default function AttendanceClient({ batches }: { batches: Batch[] }) {
     else toast.error('Failed to save')
   }
 
+  const presentCount = students.filter((s) => attendance[s.id] === 'PRESENT' || attendance[s.id] === 'LATE').length
+  const attendancePct = students.length > 0 ? Math.round((presentCount / students.length) * 100) : 0
+
   return (
     <div className="font-inter space-y-6 max-w-4xl mx-auto p-4 md:p-8">
       <div>
@@ -99,10 +102,21 @@ export default function AttendanceClient({ batches }: { batches: Batch[] }) {
         >
           <Download size={16} /> Load Data
         </button>
+        {loaded && batchId && (
+          <a
+            href={`/api/admin/export/attendance?batchId=${batchId}&from=${date}&to=${date}`}
+            className="px-6 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm decoration-none shadow-sm flex items-center gap-2 h-[42px]"
+          >
+            <FileSpreadsheet size={16} /> Export Excel
+          </a>
+        )}
       </div>
 
       {loaded && (
         <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between flex-wrap gap-2">
+            <p className="m-0 text-sm font-semibold text-blue-800">Today&apos;s attendance: <strong>{presentCount}/{students.length}</strong> present ({attendancePct}%)</p>
+          </div>
           {/* Bulk actions */}
           <div className="flex gap-2 mb-4 flex-wrap items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
             <span className="text-sm font-semibold text-slate-600 mr-2">Mark all as:</span>

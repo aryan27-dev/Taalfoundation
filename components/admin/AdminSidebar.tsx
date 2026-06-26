@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { LayoutDashboard, Users, CheckSquare, IndianRupee, Calendar, Shirt, Megaphone, Clock, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, CheckSquare, IndianRupee, Calendar, Shirt, Megaphone, Clock, LogOut, Layers } from 'lucide-react'
 import Logo from '@/components/Logo'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/students', label: 'Students', icon: Users },
+  { href: '/admin/batches', label: 'Batches', icon: Layers },
   { href: '/admin/attendance', label: 'Attendance', icon: CheckSquare },
   { href: '/admin/fees', label: 'Fees', icon: IndianRupee },
   { href: '/admin/events', label: 'Events', icon: Calendar },
